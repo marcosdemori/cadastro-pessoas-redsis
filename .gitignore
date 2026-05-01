@@ -1,0 +1,15 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Arquivos gerados pelo dashboard
+updates.sql
+relatorio_cnpj.csv
+erros.txt
+
+# Temporários
+*.tmp
+*.bak
