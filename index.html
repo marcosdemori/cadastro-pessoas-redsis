@@ -168,7 +168,8 @@
 
 <header>
   <h1>Dashboard CNPJ - Redsis</h1>
-  <p>Controle de consulta CNPJ, geração de UPDATE SQL e qualidade de cadastro.</p>
+  <p>Controle de consulta CNPJ, geração de SQL UPDATE ou INSERT OR UPDATE e qualidade de cadastro.</p>
+  <p class="small"><strong>Versão:</strong> v2 - opções disponíveis: UPDATE e INSERT OR UPDATE</p>
 </header>
 
 <main>
@@ -227,12 +228,20 @@
           <option value="30000">30 segundos</option>
         </select>
 
-        <label>COD_PESS inicial:</label>
-        <input type="number" id="codInicio" placeholder="Padrão: 1" min="1" />
+        <label>Tipo de SQL:</label>
+        <select id="tipoSql" onchange="aplicarModoSQL()">
+          <option value="UPDATE" selected>UPDATE</option>
+          <option value="INSERT_OR_UPDATE">INSERT OR UPDATE</option>
+        </select>
+
+        <span id="codInicioGroup">
+          <label>COD_PESS inicial:</label>
+          <input type="number" id="codInicio" placeholder="Obrigatório no INSERT OR UPDATE" min="1" />
+        </span>
       </div>
       <p class="small" style="margin-top:10px;">A API pública pode retornar 429 quando há muitas consultas. O recomendado é 20 segundos.</p>
       <div class="controls" style="margin-top:12px;">
-        <button class="success" onclick="baixarSQL()">⬇ Baixar updates.sql</button>
+        <button class="success" onclick="baixarSQL()">⬇ Baixar SQL</button>
         <button onclick="baixarCSV()">⬇ Baixar relatório CSV</button>
         <button onclick="limparTudo()">🗑 Limpar dashboard</button>
       </div>
@@ -244,7 +253,8 @@
         <span>✅ DDD + telefone concatenados</span>
         <span>✅ MUN_PESS em CAIXA ALTA via UPPER()</span>
         <span>✅ COD_MUN_PESS via subselect IBGE</span>
-        <span>✅ Gera UPDATE OR INSERT com COD_PESS inicial configurável</span>
+        <span>✅ Gera UPDATE simples sem COD_PESS</span>
+        <span>✅ Gera INSERT OR UPDATE com COD_PESS inicial configurável, usando MATCHING por CNPJ</span>
       </div>
     </div>
   </section>
@@ -275,7 +285,7 @@
   <!-- SQL gerado -->
   <section class="card">
     <div class="section-title">SQL gerado</div>
-    <textarea id="sqlOutput" readonly placeholder="Os UPDATEs aparecerão aqui..."></textarea>
+    <textarea id="sqlOutput" readonly placeholder="O SQL gerado aparecerá aqui..."></textarea>
   </section>
 
 </main>
@@ -384,6 +394,26 @@
     reader.readAsText(file, 'UTF-8');
   });
 
+  // ── Modo de geração SQL ───────────────────────────────────────────────────
+  function getTipoSql() {
+    return document.getElementById('tipoSql').value;
+  }
+
+  function aplicarModoSQL() {
+    const tipo = getTipoSql();
+    const codGroup = document.getElementById('codInicioGroup');
+    const codInput = document.getElementById('codInicio');
+    const sqlOutput = document.getElementById('sqlOutput');
+
+    const usaCodPess = tipo === 'INSERT_OR_UPDATE';
+    codGroup.style.display = usaCodPess ? 'inline-flex' : 'none';
+    codInput.disabled = !usaCodPess;
+
+    sqlOutput.placeholder = usaCodPess
+      ? 'Os INSERT OR UPDATE aparecerão aqui...'
+      : 'Os UPDATEs aparecerão aqui...';
+  }
+
   // ── Iniciar / parar ───────────────────────────────────────────────────────
   async function iniciarConsultas() {
     if (!lista.length) carregarLista();
@@ -391,9 +421,17 @@
 
     rodando = true;
     const delay = Number(document.getElementById('delay').value);
+    const tipoSql = getTipoSql();
 
-    const codInput = document.getElementById('codInicio').value;
-    codAtual = codInput ? Number(codInput) : 1;
+    if (tipoSql === 'INSERT_OR_UPDATE') {
+      const codInput = Number(document.getElementById('codInicio').value);
+      if (!Number.isInteger(codInput) || codInput < 1) {
+        alert('Para gerar INSERT OR UPDATE, informe um COD_PESS inicial válido.');
+        rodando = false;
+        return;
+      }
+      codAtual = codInput;
+    }
 
     while (rodando && indiceAtual < lista.length) {
       const cnpj = lista[indiceAtual];
@@ -473,59 +511,101 @@
   }
 
   // ── Montar SQL ─────────────────────────────────────────────────────────────
-  function montarSQL(r) {
-    const sql = `UPDATE OR INSERT INTO PESSOAS (
-  COD_PESS,
-  CNPJCPF_PESS,
-  NOM_PESS,
-  FANT_PESS,
-  IE_PESS,
-  CONTBICMS_PESS,
-  END_PESS,
-  NUM_PESS,
-  COMPL_PESS,
-  BAIRRO_PESS,
-  MUN_PESS,
-  COD_MUN,
-  UF_PESS,
-  CEP_PESS,
-  FONE_PESS,
-  FONE2_PESS,
-  EMAIL_PESS,
-  SIT_PESS,
-  TIPO_PESS,
-  CNAEP_PESS,
-  COD_PAIS,
-  NOM_PAIS
-) VALUES (
-  ${codAtual},
-  '${r.cnpj}',
-  ${sqlTexto(r.razao_social)},
-  ${sqlTexto(r.nome_fantasia)},
-  ${tratarIE(r.ie, r.estado)},
-  ${contbicms(r.ie)},
-  ${sqlTexto(r.logradouro)},
-  ${sqlNumero(r.numero)},
-  ${sqlTexto(r.complemento)},
-  ${sqlTexto(r.bairro)},
-  ${sqlMunNome(r.ibge_id)},
-  ${sqlMunCod(r.ibge_id)},
-  ${sqlTexto(r.estado)},
-  ${r.cep ? `'${r.cep}'` : 'NULL'},
-  ${sqlTexto(r.telefone1)},
-  ${sqlTexto(r.telefone2)},
-  ${sqlTexto(r.email)},
-  ${normalizarSituacao()},
-  ${sqlTexto(r.tipo)},
-  ${sqlTexto(r.cnae)},
-  1058,
-  'BRASIL'
-)
-MATCHING (CNPJCPF_PESS);`;
+  function camposPessoaBase() {
+    return [
+      'CNPJCPF_PESS',
+      'NOM_PESS',
+      'FANT_PESS',
+      'IE_PESS',
+      'CONTBICMS_PESS',
+      'END_PESS',
+      'NUM_PESS',
+      'COMPL_PESS',
+      'BAIRRO_PESS',
+      'MUN_PESS',
+      'COD_MUN',
+      'UF_PESS',
+      'CEP_PESS',
+      'FONE_PESS',
+      'FONE2_PESS',
+      'EMAIL_PESS',
+      'SIT_PESS',
+      'TIPO_PESS',
+      'CNAEP_PESS',
+      'COD_PAIS',
+      'NOM_PAIS'
+    ];
+  }
 
+  function valoresPessoaBase(r) {
+    return [
+      `'${r.cnpj}'`,
+      sqlTexto(r.razao_social),
+      sqlTexto(r.nome_fantasia),
+      tratarIE(r.ie, r.estado),
+      contbicms(r.ie),
+      sqlTexto(r.logradouro),
+      sqlNumero(r.numero),
+      sqlTexto(r.complemento),
+      sqlTexto(r.bairro),
+      sqlMunNome(r.ibge_id),
+      sqlMunCod(r.ibge_id),
+      sqlTexto(r.estado),
+      r.cep ? `'${r.cep}'` : 'NULL',
+      sqlTexto(r.telefone1),
+      sqlTexto(r.telefone2),
+      sqlTexto(r.email),
+      normalizarSituacao(),
+      sqlTexto(r.tipo),
+      sqlTexto(r.cnae),
+      '1058',
+      `'BRASIL'`
+    ];
+  }
+
+  function montarInsertOrUpdateSQL(r) {
+    const campos = ['COD_PESS', ...camposPessoaBase()];
+    const valores = [String(codAtual), ...valoresPessoaBase(r)];
     codAtual++;
 
-    return sql;
+    return `UPDATE OR INSERT INTO PESSOAS (
+  ${campos.join(',\n  ')}
+) VALUES (
+  ${valores.join(',\n  ')}
+)
+MATCHING (CNPJCPF_PESS);`;
+  }
+
+  function montarUpdateSQL(r) {
+    return `UPDATE PESSOAS
+  SET
+    NOM_PESS       = ${sqlTexto(r.razao_social)},
+    FANT_PESS      = ${sqlTexto(r.nome_fantasia)},
+    IE_PESS        = ${tratarIE(r.ie, r.estado)},
+    CONTBICMS_PESS = ${contbicms(r.ie)},
+    END_PESS       = ${sqlTexto(r.logradouro)},
+    NUM_PESS       = ${sqlNumero(r.numero)},
+    COMPL_PESS     = ${sqlTexto(r.complemento)},
+    BAIRRO_PESS    = ${sqlTexto(r.bairro)},
+    MUN_PESS       = ${sqlMunNome(r.ibge_id)},
+    COD_MUN        = ${sqlMunCod(r.ibge_id)},
+    UF_PESS        = ${sqlTexto(r.estado)},
+    CEP_PESS       = ${r.cep ? `'${r.cep}'` : 'NULL'},
+    FONE_PESS      = ${sqlTexto(r.telefone1)},
+    FONE2_PESS     = ${sqlTexto(r.telefone2)},
+    EMAIL_PESS     = ${sqlTexto(r.email)},
+    SIT_PESS       = ${normalizarSituacao()},
+    TIPO_PESS      = ${sqlTexto(r.tipo)},
+    CNAEP_PESS     = ${sqlTexto(r.cnae)},
+    COD_PAIS       = 1058,
+    NOM_PAIS       = 'BRASIL'
+  WHERE CNPJCPF_PESS = '${r.cnpj}';`;
+  }
+
+  function montarSQL(r) {
+    return getTipoSql() === 'INSERT_OR_UPDATE'
+      ? montarInsertOrUpdateSQL(r)
+      : montarUpdateSQL(r);
   }
 
   // ── UI ─────────────────────────────────────────────────────────────────────
@@ -583,7 +663,8 @@ MATCHING (CNPJCPF_PESS);`;
 
   // ── Downloads ──────────────────────────────────────────────────────────────
   function baixarSQL() {
-    baixarArquivo('updates.sql', document.getElementById('sqlOutput').value || '', 'text/sql');
+    const nome = getTipoSql() === 'INSERT_OR_UPDATE' ? 'pessoas_insert_or_update.sql' : 'pessoas_update.sql';
+    baixarArquivo(nome, document.getElementById('sqlOutput').value || '', 'text/sql');
   }
 
   function baixarCSV() {
@@ -615,7 +696,11 @@ MATCHING (CNPJCPF_PESS);`;
     document.getElementById('sqlOutput').value = '';
     renderTabela();
     atualizarTela();
+    aplicarModoSQL();
   }
+
+  aplicarModoSQL();
+  document.addEventListener('DOMContentLoaded', aplicarModoSQL);
 </script>
 
 </body>
