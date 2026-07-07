@@ -27,6 +27,34 @@ def sql_numero(valor):
     valor = somente_numero(valor) if valor else None
     return valor if valor else "NULL"
 
+def normalizar_tipo_cadastro(valor):
+    valor = (valor or 'cliente').strip().lower()
+    aliases = {
+        '1': 'cliente',
+        'c': 'cliente',
+        'cliente': 'cliente',
+        '2': 'fornecedor',
+        'f': 'fornecedor',
+        'fornecedor': 'fornecedor',
+        '3': 'ambos',
+        'a': 'ambos',
+        'ambos': 'ambos',
+        'cliente_fornecedor': 'ambos',
+        'cliente e fornecedor': 'ambos',
+    }
+    return aliases.get(valor, 'cliente')
+
+def campos_tipo_cadastro(tipo_cadastro):
+    tipo_cadastro = normalizar_tipo_cadastro(tipo_cadastro)
+    if tipo_cadastro == 'cliente':
+        return ['CLIENT_PESS']
+    if tipo_cadastro == 'fornecedor':
+        return ['FORN_PESS']
+    return ['CLIENT_PESS', 'FORN_PESS']
+
+def set_tipo_cadastro_sql(tipo_cadastro, indent='  '):
+    return ',\n'.join(f"{indent}{campo} = 'S'" for campo in campos_tipo_cadastro(tipo_cadastro))
+
 # Tamanho total dos dígitos da IE (somente números) por UF
 IE_TAMANHO = {
     'AC': 13, 'AL':  9, 'AM':  9, 'AP':  9, 'BA':  8,
@@ -76,7 +104,7 @@ def montar_fone(ddd, fone):
     resultado = d + f
     return resultado if resultado else None
 
-def consulta_com_retry(cnpj):
+def consulta_com_retry(cnpj, tipo_cadastro):
     url = f'https://publica.cnpj.ws/cnpj/{cnpj}'
 
     for tentativa in range(5):
@@ -148,7 +176,8 @@ SET
   TIPO_PESS    = {sql_texto(tipo)},
   CNAEP_PESS   = {sql_texto(cnae)},
   COD_PAIS     = 1058,
-  NOM_PAIS     = 'BRASIL'
+  NOM_PAIS     = 'BRASIL',
+{set_tipo_cadastro_sql(tipo_cadastro, '  ')}
 WHERE CNPJCPF_PESS = '{cnpj}';"""
 
             elif r.status_code == 429:
@@ -168,6 +197,13 @@ WHERE CNPJCPF_PESS = '{cnpj}';"""
 
 
 # ── Main ────────────────────────────────────────────────────────────────────
+print('Gerar cadastro como:')
+print('1 - Cliente')
+print('2 - Fornecedor')
+print('3 - Cliente e Fornecedor')
+tipo_cadastro = normalizar_tipo_cadastro(input('Opção [1]: ') or '1')
+print(f'Tipo selecionado: {tipo_cadastro}')
+
 with open('CNPJ.txt', encoding='utf-8') as f:
     lista = [somente_numero(l.strip()) for l in f if l.strip()]
 
@@ -183,7 +219,7 @@ for cnpj in lista:
     contador += 1
     print(f'[{contador}/{total}] Consultando {cnpj}...')
 
-    sql = consulta_com_retry(cnpj)
+    sql = consulta_com_retry(cnpj, tipo_cadastro)
 
     if sql:
         f_out.write(sql + "\n\n")

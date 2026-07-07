@@ -11,6 +11,7 @@ Este projeto foi criado para apoiar a migração e atualização de cadastros en
 - tratar Inscrição Estadual;
 - marcar contribuinte de ICMS;
 - gerar `UPDATE OR INSERT`;
+- escolher se o cadastro será gerado como cliente, fornecedor ou ambos;
 - controlar o `COD_PESS` inicial;
 - baixar SQL e relatório CSV.
 
@@ -27,12 +28,13 @@ CHANGELOG.md
 
 1. Abra o arquivo `index.html` no navegador.
 2. Cole uma lista de CNPJs ou importe um arquivo `.txt`/`.csv`.
-3. Informe o `COD_PESS inicial`.
-   - Se deixar vazio, começa em `1`.
-4. Clique em **Carregar lista**.
-5. Clique em **Iniciar consultas**.
-6. Ao final, baixe:
-   - `updates.sql`
+3. Escolha o **Tipo de SQL**: `UPDATE` ou `INSERT OR UPDATE`.
+4. Escolha em **Gerar cadastro como**: `Cliente`, `Fornecedor` ou `Cliente e Fornecedor`.
+5. Se escolher `INSERT OR UPDATE`, informe o `COD_PESS inicial`.
+6. Clique em **Carregar lista**.
+7. Clique em **Iniciar consultas**.
+8. Ao final, baixe:
+   - arquivo `.sql` com o nome conforme o tipo escolhido;
    - `relatorio_cnpj.csv`
 
 ## SQL gerado
@@ -77,6 +79,8 @@ O SQL gerado contempla:
 - `CNAEP_PESS`
 - `COD_PAIS`
 - `NOM_PAIS`
+- `CLIENT_PESS`, quando escolhido Cliente ou Cliente e Fornecedor
+- `FORN_PESS`, quando escolhido Fornecedor ou Cliente e Fornecedor
 
 ## Regras aplicadas
 
@@ -187,3 +191,22 @@ git push -u origin main
 Este projeto roda localmente no navegador. Ele não contém credenciais, senha ou conexão direta com banco de dados.
 
 Mesmo assim, recomenda-se manter o repositório privado por conter regras internas de cadastro e SQL da empresa.
+
+
+### Cliente / Fornecedor
+
+A opção **Gerar cadastro como** define quais campos serão incluídos no SQL:
+
+```sql
+-- Cliente
+CLIENT_PESS = 'S'
+
+-- Fornecedor
+FORN_PESS = 'S'
+
+-- Cliente e Fornecedor
+CLIENT_PESS = 'S'
+FORN_PESS = 'S'
+```
+
+O sistema não força o campo não selecionado para `N`, evitando remover uma marcação existente quando o CNPJ já estiver cadastrado.

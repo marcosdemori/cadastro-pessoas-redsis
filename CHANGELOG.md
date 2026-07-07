@@ -2,6 +2,24 @@
 
 ## Versão atual
 
+
+## v3
+
+### Adicionado
+
+- Nova opção **Gerar cadastro como** no dashboard.
+- Permite gerar SQL marcando a pessoa como:
+  - Cliente: `CLIENT_PESS = 'S'`;
+  - Fornecedor: `FORN_PESS = 'S'`;
+  - Cliente e Fornecedor: ambos os campos com `'S'`.
+- Nome do arquivo SQL baixado passa a incluir o tipo selecionado.
+- Script `CNPJ.py` também pergunta se deve gerar como Cliente, Fornecedor ou ambos.
+
+### Segurança do cadastro
+
+- O campo não selecionado não é forçado para `N`, evitando remover uma classificação existente em cadastros já gravados.
+
+
 ### Adicionado
 
 - Dashboard HTML único para consulta de CNPJ.

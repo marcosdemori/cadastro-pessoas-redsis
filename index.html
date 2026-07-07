@@ -169,7 +169,7 @@
 <header>
   <h1>Dashboard CNPJ - Redsis</h1>
   <p>Controle de consulta CNPJ, geração de SQL UPDATE ou INSERT OR UPDATE e qualidade de cadastro.</p>
-  <p class="small"><strong>Versão:</strong> v2 - opções disponíveis: UPDATE e INSERT OR UPDATE</p>
+  <p class="small"><strong>Versão:</strong> v3 - opções disponíveis: UPDATE, INSERT OR UPDATE, Cliente, Fornecedor ou Ambos</p>
 </header>
 
 <main>
@@ -234,6 +234,13 @@
           <option value="INSERT_OR_UPDATE">INSERT OR UPDATE</option>
         </select>
 
+        <label>Gerar cadastro como:</label>
+        <select id="tipoCadastro" onchange="aplicarModoSQL()">
+          <option value="CLIENTE" selected>Cliente</option>
+          <option value="FORNECEDOR">Fornecedor</option>
+          <option value="AMBOS">Cliente e Fornecedor</option>
+        </select>
+
         <span id="codInicioGroup">
           <label>COD_PESS inicial:</label>
           <input type="number" id="codInicio" placeholder="Obrigatório no INSERT OR UPDATE" min="1" />
@@ -255,6 +262,7 @@
         <span>✅ COD_MUN_PESS via subselect IBGE</span>
         <span>✅ Gera UPDATE simples sem COD_PESS</span>
         <span>✅ Gera INSERT OR UPDATE com COD_PESS inicial configurável, usando MATCHING por CNPJ</span>
+        <span>✅ Permite marcar o cadastro como Cliente, Fornecedor ou Cliente e Fornecedor</span>
       </div>
     </div>
   </section>
@@ -399,6 +407,34 @@
     return document.getElementById('tipoSql').value;
   }
 
+  function getTipoCadastro() {
+    return document.getElementById('tipoCadastro').value;
+  }
+
+  function camposTipoCadastro() {
+    const tipoCadastro = getTipoCadastro();
+    if (tipoCadastro === 'CLIENTE') return ['CLIENT_PESS'];
+    if (tipoCadastro === 'FORNECEDOR') return ['FORN_PESS'];
+    return ['CLIENT_PESS', 'FORN_PESS'];
+  }
+
+  function valoresTipoCadastro() {
+    return camposTipoCadastro().map(() => "'S'");
+  }
+
+  function setTipoCadastroSQL(indent = '    ') {
+    return camposTipoCadastro()
+      .map(campo => `${indent}${campo} = 'S'`)
+      .join(',\n');
+  }
+
+  function labelTipoCadastro() {
+    const tipoCadastro = getTipoCadastro();
+    if (tipoCadastro === 'CLIENTE') return 'cliente';
+    if (tipoCadastro === 'FORNECEDOR') return 'fornecedor';
+    return 'cliente_fornecedor';
+  }
+
   function aplicarModoSQL() {
     const tipo = getTipoSql();
     const codGroup = document.getElementById('codInicioGroup');
@@ -409,9 +445,10 @@
     codGroup.style.display = usaCodPess ? 'inline-flex' : 'none';
     codInput.disabled = !usaCodPess;
 
+    const label = labelTipoCadastro().replaceAll('_', ' e ');
     sqlOutput.placeholder = usaCodPess
-      ? 'Os INSERT OR UPDATE aparecerão aqui...'
-      : 'Os UPDATEs aparecerão aqui...';
+      ? `Os INSERT OR UPDATE para ${label} aparecerão aqui...`
+      : `Os UPDATEs para ${label} aparecerão aqui...`;
   }
 
   // ── Iniciar / parar ───────────────────────────────────────────────────────
@@ -564,8 +601,8 @@
   }
 
   function montarInsertOrUpdateSQL(r) {
-    const campos = ['COD_PESS', ...camposPessoaBase()];
-    const valores = [String(codAtual), ...valoresPessoaBase(r)];
+    const campos = ['COD_PESS', ...camposPessoaBase(), ...camposTipoCadastro()];
+    const valores = [String(codAtual), ...valoresPessoaBase(r), ...valoresTipoCadastro()];
     codAtual++;
 
     return `UPDATE OR INSERT INTO PESSOAS (
@@ -598,7 +635,8 @@ MATCHING (CNPJCPF_PESS);`;
     TIPO_PESS      = ${sqlTexto(r.tipo)},
     CNAEP_PESS     = ${sqlTexto(r.cnae)},
     COD_PAIS       = 1058,
-    NOM_PAIS       = 'BRASIL'
+    NOM_PAIS       = 'BRASIL',
+${setTipoCadastroSQL('    ')}
   WHERE CNPJCPF_PESS = '${r.cnpj}';`;
   }
 
@@ -663,7 +701,8 @@ MATCHING (CNPJCPF_PESS);`;
 
   // ── Downloads ──────────────────────────────────────────────────────────────
   function baixarSQL() {
-    const nome = getTipoSql() === 'INSERT_OR_UPDATE' ? 'pessoas_insert_or_update.sql' : 'pessoas_update.sql';
+    const prefixo = getTipoSql() === 'INSERT_OR_UPDATE' ? 'pessoas_insert_or_update' : 'pessoas_update';
+    const nome = `${prefixo}_${labelTipoCadastro()}.sql`;
     baixarArquivo(nome, document.getElementById('sqlOutput').value || '', 'text/sql');
   }
 
