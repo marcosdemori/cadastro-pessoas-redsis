@@ -1,212 +1,169 @@
-# Dashboard CNPJ - Redsis
+# Saneamento de Pessoas - Redsis
 
-Dashboard HTML para consultar CNPJs na API pública `cnpj.ws`, gerar SQL para cadastro/atualização na tabela `PESSOAS` e acompanhar o progresso das consultas.
+Ferramenta local para consultar CNPJs, comparar os dados oficiais com a base atual da tabela `PESSOAS` e gerar SQL de saneamento com revisão antes da execução.
 
-## Objetivo
+## Versão atual
 
-Este projeto foi criado para apoiar a migração e atualização de cadastros entre bases Edari/Redsis, permitindo:
+**v4.1**
 
-- consultar dados cadastrais por CNPJ;
-- gerar SQL no padrão do banco;
-- tratar Inscrição Estadual;
-- marcar contribuinte de ICMS;
-- gerar `UPDATE OR INSERT`;
-- escolher se o cadastro será gerado como cliente, fornecedor ou ambos;
-- controlar o `COD_PESS` inicial;
-- baixar SQL e relatório CSV.
+Fluxo principal:
 
-## Arquivos
+1. importar CNPJs;
+2. importar a base atual da `PESSOAS`;
+3. consultar dados oficiais;
+4. comparar Redsis × Receita/API;
+5. revisar divergências e campos permitidos;
+6. gerar SQL somente do necessário.
 
-```text
-index.html
-README.md
-CHANGELOG.md
-.gitignore
-```
+## O que a V4.1 implementa
 
-## Como usar
+- validação completa dos dígitos verificadores do CNPJ;
+- bloqueio de CNPJ não ativo por padrão;
+- preservação de dados existentes quando a API vier vazia;
+- saneamento de telefone, CEP e e-mail;
+- escolha de IE priorizando inscrição ativa da mesma UF;
+- importação de CSV/TXT da tabela `PESSOAS`;
+- reconhecimento automático de `NOVO`, `EXISTENTE` e `SEM BASE`;
+- indicadores de novos, existentes, sem alteração e com divergência;
+- comparação campo a campo Redsis × Receita/API;
+- seleção global dos campos autorizados para UPDATE;
+- seleção individual por CNPJ no modal de comparação;
+- UPDATE contendo somente campos selecionados e realmente divergentes;
+- proteção para não apagar valor existente quando a API não tiver informação;
+- SQL de novos cadastros com `COD_PESS` automático usando `MAX(COD_PESS)+1` dentro de `EXECUTE BLOCK`;
+- verificação `NOT EXISTS` antes de cada INSERT novo;
+- opção manual de `COD_PESS` como fallback;
+- WHERE por CNPJ tolerando CNPJ formatado ou sem formatação na base;
+- relatório CSV de comparação e divergências;
+- seleção de cliente, fornecedor ou ambos sem zerar a marcação oposta.
 
-1. Abra o arquivo `index.html` no navegador.
-2. Cole uma lista de CNPJs ou importe um arquivo `.txt`/`.csv`.
-3. Escolha o **Tipo de SQL**: `UPDATE` ou `INSERT OR UPDATE`.
-4. Escolha em **Gerar cadastro como**: `Cliente`, `Fornecedor` ou `Cliente e Fornecedor`.
-5. Se escolher `INSERT OR UPDATE`, informe o `COD_PESS inicial`.
-6. Clique em **Carregar lista**.
-7. Clique em **Iniciar consultas**.
-8. Ao final, baixe:
-   - arquivo `.sql` com o nome conforme o tipo escolhido;
-   - `relatorio_cnpj.csv`
+## Importando a base Redsis
 
-## SQL gerado
+Execute o arquivo:
 
-O dashboard gera SQL no formato:
+`EXPORTAR_BASE_PESSOAS.sql`
 
-```sql
-UPDATE OR INSERT INTO PESSOAS (...)
-VALUES (...)
-MATCHING (CNPJCPF_PESS);
-```
+no IBExpert/Firebird e exporte o resultado como CSV/TXT **com cabeçalho**.
 
-A chave usada para atualização/inserção é:
+A única coluna obrigatória para reconhecer um cadastro é:
 
-```sql
-MATCHING (CNPJCPF_PESS)
-```
+`CNPJCPF_PESS`
 
-## Campos tratados no SQL
+Para a comparação completa, use todas as colunas do SELECT fornecido.
 
-O SQL gerado contempla:
+A ferramenta aceita `;`, vírgula ou TAB como separador e reconhece CNPJ formatado ou somente numérico.
 
-- `COD_PESS`
-- `CNPJCPF_PESS`
-- `NOM_PESS`
-- `FANT_PESS`
-- `IE_PESS`
-- `CONTBICMS_PESS`
-- `END_PESS`
-- `NUM_PESS`
-- `COMPL_PESS`
-- `BAIRRO_PESS`
-- `MUN_PESS`
-- `COD_MUN`
-- `UF_PESS`
-- `CEP_PESS`
-- `FONE_PESS`
-- `FONE2_PESS`
-- `EMAIL_PESS`
-- `SIT_PESS`
-- `TIPO_PESS`
-- `CNAEP_PESS`
-- `COD_PAIS`
-- `NOM_PAIS`
-- `CLIENT_PESS`, quando escolhido Cliente ou Cliente e Fornecedor
-- `FORN_PESS`, quando escolhido Fornecedor ou Cliente e Fornecedor
+Também existe o arquivo `MODELO_BASE_PESSOAS.csv` com o cabeçalho esperado.
 
-## Regras aplicadas
+## Comparação
 
-### CNPJ
+Para cada campo, a V4.1 mostra:
 
-- Aceita somente documentos com 14 dígitos.
-- Remove caracteres não numéricos.
-- Ignora CPF automaticamente.
+- valor atual da Redsis;
+- valor retornado pela Receita/API;
+- se está igual ou alterado;
+- checkbox indicando se aquele campo pode ser atualizado.
 
-### Inscrição Estadual
+A comparação ignora diferenças meramente visuais de maiúsculas/minúsculas, acentos e espaços. Na IE, zeros à esquerda não geram falsa divergência.
 
-- Se existir IE, aplica zeros à esquerda conforme UF.
-- Se não existir IE, grava:
+## Campos controláveis
 
-```sql
-IE_PESS = 'ISENTO'
-```
+A tela permite controlar:
 
-### Contribuinte de ICMS
+- Razão social;
+- Fantasia;
+- Inscrição estadual;
+- Endereço;
+- Número;
+- Complemento;
+- Bairro;
+- Município;
+- UF;
+- CEP;
+- Telefone 1;
+- Telefone 2;
+- E-mail;
+- Situação;
+- Tipo;
+- CNAE.
 
-- Se tiver IE:
+Existe um **Perfil seguro** como padrão. `Situação` e `Tipo` ficam fora desse perfil para evitar alterações automáticas desnecessárias.
 
-```sql
-CONTBICMS_PESS = 'S'
-```
+## Geração inteligente de SQL
 
-- Se não tiver IE:
+### Existentes
+
+Quando a base foi importada, um cadastro existente recebe UPDATE apenas nos campos que:
+
+1. estão autorizados globalmente;
+2. não foram desmarcados especificamente naquele CNPJ;
+3. estão realmente diferentes;
+4. possuem valor utilizável, quando a opção de preservar vazios estiver ligada.
+
+### Novos
+
+No modo recomendado, os novos entram em um `EXECUTE BLOCK`.
+
+O bloco calcula o primeiro código no momento da execução:
 
 ```sql
-CONTBICMS_PESS = 'N'
+SELECT COALESCE(MAX(COD_PESS), 0) + 1
+FROM PESSOAS
+INTO :V_COD;
 ```
 
-### Situação cadastral
+Antes de cada INSERT há uma verificação de existência pelo CNPJ.
 
-Sempre grava:
+> Importante: `MAX(COD_PESS)+1` é mais seguro do que digitar uma faixa manualmente, mas não substitui um generator/sequence real. Execute o lote sem outro processo cadastrando pessoas simultaneamente. Se a sua base possuir um generator oficial da `PESSOAS`, ele pode ser incorporado em uma evolução futura.
 
-```sql
-SIT_PESS = 'ATIVO'
-```
+## Modos de SQL
 
-### País
+- **Inteligente**: recomendado. UPDATE para existentes e INSERT para novos.
+- **Somente UPDATE**: ignora registros classificados como novos.
+- **UPDATE OR INSERT**: mantido para compatibilidade; prefira o modo inteligente quando houver base importada.
 
-Sempre grava:
+## Situação cadastral
 
-```sql
-COD_PAIS = 1058,
-NOM_PAIS = 'BRASIL'
-```
+Por padrão, CNPJ que não estiver ativo fica fora do SQL. É possível liberar manualmente quando necessário.
 
-### Município
+`SIT_PESS` também pode ser autorizado na seleção de campos. O perfil seguro não o marca por padrão.
 
-O município é buscado pelo código IBGE:
+## Utilitário Python
 
-```sql
-MUN_PESS = (SELECT UPPER(NOM_MUN) FROM MUN WHERE CODIBGE_MUN = '...')
-COD_MUN  = (SELECT COD_MUN FROM MUN WHERE CODIBGE_MUN = '...')
-```
+`CNPJ.py` continua disponível para lotes simples de UPDATE sem interface. Ele usa as regras de validação e saneamento, porém a comparação Redsis × Receita e a seleção visual de campos são recursos da interface `index.html`.
 
-## API utilizada
+## Segurança operacional
 
-Endpoint público:
+Antes de executar em produção:
 
-```text
-https://publica.cnpj.ws/cnpj/{CNPJ}
-```
+- faça backup da base;
+- revise os itens marcados como revisão;
+- confira os INSERTs novos;
+- execute preferencialmente primeiro em uma base de teste;
+- no modo `MAX(COD_PESS)+1`, não execute simultaneamente com outro processo que esteja cadastrando pessoas.
 
-## Atenção sobre limite da API
+### Controle de limite da API (v4.3)
+A aplicação trata respostas HTTP 429 automaticamente. Quando a API informar `Retry-After`, esse tempo é respeitado; caso contrário é usado backoff progressivo a partir do intervalo configurado. O padrão passou a 10 segundos e pode ser alterado para 5, 15, 30 ou 60 segundos. Registros que ainda falharem podem ser reprocessados individualmente ou pelo botão **Reprocessar erros**, sem refazer as consultas já concluídas.
 
-A API pública pode retornar erro `429` quando muitas consultas são feitas em sequência.
+### Retomada e preservação de progresso (v4.3)
 
-Recomendação:
+A aplicação salva automaticamente o andamento das consultas no navegador. Ao fechar/reabrir a página, os resultados já obtidos são restaurados e **Consultar válidos** processa apenas CNPJs ainda sem sucesso. CNPJs concluídos não são consultados novamente.
 
-- usar delay de 20 segundos ou mais;
-- se houver erro 429, rodar novamente depois;
-- baixar o relatório CSV para revisar falhas.
+Em caso de HTTP 429, a aplicação respeita `Retry-After` quando disponível, aplica espera progressiva e aumenta temporariamente o intervalo entre as próximas consultas. Se o limite persistir, o registro fica como erro para reprocessamento posterior, sem apagar os demais resultados.
 
-## Como subir para o GitHub
+## Fontes de consulta - v4.3
 
-### 1. Criar repositório privado
+A fonte principal continua sendo **CNPJ.ws**, pois é a integração já utilizada pelo projeto e pode retornar Inscrição Estadual.
 
-No GitHub:
+Na interface, em **Estratégia de consulta**, existem quatro modos:
 
-1. Clique em **New repository**
-2. Nome sugerido:
+- **Automático: CNPJ.ws → BrasilAPI → Minha Receita**: recomendado. Sempre tenta CNPJ.ws primeiro e usa as demais somente em caso de falha.
+- **Somente CNPJ.ws (com IE)**: não usa fallback.
+- **Somente BrasilAPI**: útil para contingência.
+- **Somente Minha Receita**: útil para contingência.
 
-```text
-dashboard-cnpj-redsis
-```
+O fallback ocorre em erros de rede, HTTP 429, HTTP 4xx/5xx relevantes ou quando a resposta não contém dados cadastrais suficientes. A tela de revisão mostra qual API respondeu para cada CNPJ.
 
-3. Marque como **Private**
-4. Crie o repositório
+### Inscrição Estadual em fallback
 
-### 2. Subir os arquivos
-
-No terminal, dentro da pasta do projeto:
-
-```bash
-git init
-git add .
-git commit -m "feat: adiciona dashboard CNPJ Redsis"
-git branch -M main
-git remote add origin https://github.com/marcosdemori/cadastro-pessoas-redsis.git
-git push -u origin main
-```
-
-## Segurança
-
-Este projeto roda localmente no navegador. Ele não contém credenciais, senha ou conexão direta com banco de dados.
-
-Mesmo assim, recomenda-se manter o repositório privado por conter regras internas de cadastro e SQL da empresa.
-
-
-### Cliente / Fornecedor
-
-A opção **Gerar cadastro como** define quais campos serão incluídos no SQL:
-
-```sql
--- Cliente
-CLIENT_PESS = 'S'
-
--- Fornecedor
-FORN_PESS = 'S'
-
--- Cliente e Fornecedor
-CLIENT_PESS = 'S'
-FORN_PESS = 'S'
-```
-
-O sistema não força o campo não selecionado para `N`, evitando remover uma marcação existente quando o CNPJ já estiver cadastrado.
+BrasilAPI e Minha Receita são tratadas como fontes alternativas cadastrais e podem não fornecer IE. Para registros já existentes, com **Preservar dados existentes quando API vier vazia** ativo, a IE atual da Redsis não é apagada. Registros obtidos por fallback ficam sinalizados para revisão.

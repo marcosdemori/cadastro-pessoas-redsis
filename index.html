@@ -1,746 +1,131 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard CNPJ - Redsis</title>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --card-2: #1f2937;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --green: #22c55e;
-      --yellow: #f59e0b;
-      --red: #ef4444;
-      --blue: #38bdf8;
-      --border: #374151;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: linear-gradient(135deg, #020617, #111827);
-      color: var(--text);
-    }
-
-    header {
-      padding: 24px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.95);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    header h1 { margin: 0; font-size: 26px; }
-    header p  { margin: 8px 0 0; color: var(--muted); }
-
-    main { padding: 24px; display: grid; gap: 20px; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(160px, 1fr));
-      gap: 16px;
-    }
-
-    .card {
-      background: rgba(17, 24, 39, 0.92);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-    }
-
-    .metric-title { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
-    .metric-value { font-size: 28px; font-weight: bold; }
-    .ok   { color: var(--green);  }
-    .err  { color: var(--red);    }
-    .info { color: var(--blue);   }
-
-    .section-title { font-size: 18px; font-weight: bold; margin-bottom: 12px; }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    button, input, textarea, select {
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card-2);
-      color: var(--text);
-      padding: 10px 12px;
-      font-size: 14px;
-    }
-    button { cursor: pointer; font-weight: bold; transition: .2s; }
-    button:hover { transform: translateY(-1px); border-color: var(--blue); }
-    button.primary { background: #0369a1; border-color: #0284c7; }
-    button.success { background: #166534; border-color: #22c55e; }
-    button.danger  { background: #7f1d1d; border-color: #ef4444; }
-
-    textarea {
-      width: 100%;
-      min-height: 160px;
-      resize: vertical;
-      font-family: Consolas, monospace;
-    }
-
-    .progress-wrap {
-      background: #020617;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      overflow: hidden;
-      height: 18px;
-    }
-    .progress-bar {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #0284c7, #22c55e);
-      transition: width .3s;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      overflow-y: auto;   /* scroll vertical */
-      max-height: 400px;  /* altura máxima */
-    }
-
-    thead th {
-      position: sticky;
-      top: 0;
-      background: #020617;
-      z-index: 10;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      min-width: 900px;
-    }
-    th, td {
-      border-bottom: 1px solid var(--border);
-      padding: 10px;
-      text-align: left;
-      vertical-align: top;
-    }
-    th {
-      background: #020617;
-      color: var(--muted);
-      position: sticky;
-      top: 84px;
-      z-index: 5;
-    }
-    tr:hover td { background: rgba(56,189,248,.06); }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    .badge-ok   { background: rgba(34,197,94,.15); color: var(--green); }
-    .badge-erro { background: rgba(239,68,68,.15);  color: var(--red);  }
-
-    .split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    .small { color: var(--muted); font-size: 12px; }
-
-    .tag-list { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; line-height: 2; }
-    .tag-list span { display: block; }
-
-    @media (max-width: 900px) {
-      .grid, .split { grid-template-columns: 1fr; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Saneamento de Pessoas - Redsis v4.3</title>
+<style>
+:root{--bg:#07111f;--card:#0f1d31;--card2:#14243a;--text:#eef4fb;--muted:#94a3b8;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--blue:#38bdf8;--border:#2a3b52;--shadow:0 18px 44px rgba(0,0,0,.24)}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(145deg,#030712,#0b1627 52%,#07111f);color:var(--text);min-height:100vh}header{padding:20px 26px;border-bottom:1px solid var(--border);background:rgba(7,17,31,.96);position:sticky;top:0;z-index:30;backdrop-filter:blur(12px)}.header-row{max-width:1680px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:18px}h1{margin:0;font-size:24px}.subtitle{margin:5px 0 0;color:var(--muted);font-size:13px}.version{font-size:12px;color:#bae6fd;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);padding:7px 10px;border-radius:999px;white-space:nowrap}main{padding:22px;display:grid;gap:16px;max-width:1680px;margin:auto}.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.step{border:1px solid var(--border);background:rgba(15,29,49,.72);padding:10px 12px;border-radius:12px;color:var(--muted);font-size:12px}.step strong{color:var(--text);margin-right:5px}.step.active{border-color:#0ea5e9;background:rgba(14,165,233,.09);color:#bae6fd}.metrics{display:grid;grid-template-columns:repeat(8,minmax(110px,1fr));gap:10px}.metric,.card{background:rgba(15,29,49,.94);border:1px solid var(--border);border-radius:15px;box-shadow:var(--shadow)}.metric{padding:14px}.metric-title{color:var(--muted);font-size:11px;margin-bottom:7px}.metric-value{font-size:25px;font-weight:800;line-height:1}.ok{color:var(--green)}.warn{color:var(--yellow)}.err{color:var(--red)}.info{color:var(--blue)}.card{padding:17px}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.section-title{font-size:16px;font-weight:800;margin:0 0 10px}.small{font-size:12px;color:var(--muted);line-height:1.5}.controls{display:flex;gap:9px;flex-wrap:wrap;align-items:end}.field{display:grid;gap:5px;min-width:160px}.field label{font-size:11px;color:var(--muted)}button,input,textarea,select{border-radius:9px;border:1px solid var(--border);background:var(--card2);color:var(--text);padding:9px 11px;font-size:12px;outline:none}input:focus,textarea:focus,select:focus{border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,.1)}button{cursor:pointer;font-weight:700;transition:.15s}button:hover:not(:disabled){transform:translateY(-1px);border-color:var(--blue)}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:#075985;border-color:#0ea5e9}.success{background:#166534;border-color:#22c55e}.danger{background:#7f1d1d;border-color:#ef4444}.ghost{background:transparent}textarea{width:100%;min-height:130px;resize:vertical;font-family:Consolas,monospace;line-height:1.4}.sql-area{min-height:260px}.notice{padding:10px 11px;border-radius:10px;border:1px solid var(--border);font-size:12px;line-height:1.45;margin-top:10px}.notice.info{background:rgba(56,189,248,.07);color:#dff4ff}.notice.warning{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3);color:#fde7b0}.switch-row{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-top:1px solid rgba(42,59,82,.6)}.switch-row input{margin-top:2px;accent-color:#0ea5e9}.switch-row label{font-size:12px}.switch-row span{display:block;color:var(--muted);font-size:11px;margin-top:3px}.field-grid{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:8px;margin-top:8px}.field-chip{display:flex;align-items:center;gap:7px;padding:8px 9px;border:1px solid var(--border);border-radius:9px;background:#0a1525;font-size:11px}.field-chip input{accent-color:#0ea5e9}.progress-wrap{background:#030712;border:1px solid var(--border);border-radius:999px;overflow:hidden;height:13px}.progress-bar{width:0;height:100%;background:linear-gradient(90deg,#0284c7,#22c55e);transition:width .25s}.progress-line{display:flex;justify-content:space-between;margin-top:7px}.summary-line{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.summary-chip{padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:#0a1525;font-size:11px;color:var(--muted)}.table-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:9px}.table-wrap{overflow:auto;max-height:620px;border:1px solid var(--border);border-radius:11px}table{width:100%;border-collapse:collapse;font-size:11px;min-width:1450px}th,td{border-bottom:1px solid var(--border);padding:8px 9px;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#081321;color:#aebed2;z-index:4;font-size:10px;text-transform:uppercase;letter-spacing:.03em}tr:hover td{background:rgba(56,189,248,.035)}.badge{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;font-size:10px;font-weight:800;white-space:nowrap}.badge-ok{background:rgba(34,197,94,.12);color:#86efac}.badge-warn{background:rgba(245,158,11,.12);color:#fcd34d}.badge-erro{background:rgba(239,68,68,.12);color:#fca5a5}.badge-info{background:rgba(56,189,248,.12);color:#7dd3fc}.badge-neutral{background:rgba(148,163,184,.12);color:#cbd5e1}.mono{font-family:Consolas,monospace}.nowrap{white-space:nowrap}.row-actions{display:flex;gap:5px}.row-actions button{padding:5px 7px;font-size:10px}.excluded{opacity:.45}.diff-count{font-weight:800}.diff-zero{color:#86efac}.diff-many{color:#fcd34d}.issue-list{margin:0;padding-left:15px;line-height:1.45}.issue-list li.warn{color:#fcd34d}.issue-list li.err{color:#fca5a5}dialog{width:min(1100px,calc(100vw - 28px));border:1px solid var(--border);border-radius:15px;background:#0d1a2d;color:var(--text);padding:0;box-shadow:0 28px 90px rgba(0,0,0,.55)}dialog::backdrop{background:rgba(0,0,0,.72)}.modal-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}.modal-body{padding:16px;max-height:76vh;overflow:auto}.modal-close{background:transparent;padding:5px 9px}.compare{width:100%;min-width:780px}.compare td,.compare th{position:static}.same{color:#86efac}.changed{color:#fcd34d}.newval{color:#7dd3fc}.empty{color:#64748b}.toolbar-spacer{flex:1}.sql-example{font-family:Consolas,monospace;white-space:pre-wrap;background:#07111f;border:1px solid var(--border);padding:10px;border-radius:9px;font-size:11px;color:#cbd5e1;max-height:180px;overflow:auto}@media(max-width:1200px){.metrics{grid-template-columns:repeat(4,1fr)}.split{grid-template-columns:1fr}.field-grid{grid-template-columns:repeat(3,1fr)}.steps{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){main{padding:11px}header{padding:14px}.version{display:none}.metrics{grid-template-columns:1fr 1fr}.field-grid{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr 1fr}.controls>*{flex:1 1 auto}}
+</style>
 </head>
 <body>
-
-<header>
-  <h1>Dashboard CNPJ - Redsis</h1>
-  <p>Controle de consulta CNPJ, geração de SQL UPDATE ou INSERT OR UPDATE e qualidade de cadastro.</p>
-  <p class="small"><strong>Versão:</strong> v3 - opções disponíveis: UPDATE, INSERT OR UPDATE, Cliente, Fornecedor ou Ambos</p>
-</header>
-
+<header><div class="header-row"><div><h1>Saneamento de Pessoas - Redsis</h1><p class="subtitle">Compara a base PESSOAS com dados oficiais, revisa divergências e gera SQL somente do que precisa mudar.</p></div><div class="version">v4.3 • Redsis × Receita</div></div></header>
 <main>
-
-  <!-- Métricas -->
-  <section class="grid">
-    <div class="card">
-      <div class="metric-title">Total na lista</div>
-      <div class="metric-value" id="mTotal">0</div>
-    </div>
-    <div class="card">
-      <div class="metric-title">CNPJs válidos</div>
-      <div class="metric-value info" id="mValidos">0</div>
-    </div>
-    <div class="card">
-      <div class="metric-title">Consultados OK</div>
-      <div class="metric-value ok" id="mOk">0</div>
-    </div>
-    <div class="card">
-      <div class="metric-title">Erros / 429</div>
-      <div class="metric-value err" id="mErros">0</div>
-    </div>
-  </section>
-
-  <!-- Progresso -->
-  <section class="card">
-    <div class="section-title">Progresso</div>
-    <div class="progress-wrap">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-    <p class="small" id="progressText">Nenhuma consulta iniciada.</p>
-  </section>
-
-  <!-- Entrada + Config -->
-  <section class="split">
-    <div class="card">
-      <div class="section-title">Entrada de CNPJs</div>
-      <p class="small">Cole a lista ou importe um arquivo .txt. CPF será ignorado automaticamente.</p>
-      <textarea id="cnpjInput" placeholder="Cole aqui os CNPJs, um por linha..."></textarea>
-      <div class="controls" style="margin-top:12px;">
-        <input type="file" id="fileInput" accept=".txt,.csv" />
-        <button onclick="carregarLista()">Carregar lista</button>
-        <button class="primary" onclick="iniciarConsultas()">Iniciar consultas</button>
-        <button class="danger"  onclick="pararConsultas()">Parar</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">Configurações</div>
-      <div class="controls">
-        <label>Delay entre consultas:</label>
-        <select id="delay">
-          <option value="15000">15 segundos</option>
-          <option value="20000" selected>20 segundos</option>
-          <option value="25000">25 segundos</option>
-          <option value="30000">30 segundos</option>
-        </select>
-
-        <label>Tipo de SQL:</label>
-        <select id="tipoSql" onchange="aplicarModoSQL()">
-          <option value="UPDATE" selected>UPDATE</option>
-          <option value="INSERT_OR_UPDATE">INSERT OR UPDATE</option>
-        </select>
-
-        <label>Gerar cadastro como:</label>
-        <select id="tipoCadastro" onchange="aplicarModoSQL()">
-          <option value="CLIENTE" selected>Cliente</option>
-          <option value="FORNECEDOR">Fornecedor</option>
-          <option value="AMBOS">Cliente e Fornecedor</option>
-        </select>
-
-        <span id="codInicioGroup">
-          <label>COD_PESS inicial:</label>
-          <input type="number" id="codInicio" placeholder="Obrigatório no INSERT OR UPDATE" min="1" />
-        </span>
-      </div>
-      <p class="small" style="margin-top:10px;">A API pública pode retornar 429 quando há muitas consultas. O recomendado é 20 segundos.</p>
-      <div class="controls" style="margin-top:12px;">
-        <button class="success" onclick="baixarSQL()">⬇ Baixar SQL</button>
-        <button onclick="baixarCSV()">⬇ Baixar relatório CSV</button>
-        <button onclick="limparTudo()">🗑 Limpar dashboard</button>
-      </div>
-      <div class="tag-list small">
-        <span>✅ IE com zeros à esquerda por UF</span>
-        <span>✅ CONTBICMS_PESS = S se tiver IE, N se não tiver</span>
-        <span>✅ SIT_PESS sempre <strong>ATIVO</strong></span>
-        <span>✅ COD_PAIS = 1058 / NOM_PAIS = BRASIL</span>
-        <span>✅ DDD + telefone concatenados</span>
-        <span>✅ MUN_PESS em CAIXA ALTA via UPPER()</span>
-        <span>✅ COD_MUN_PESS via subselect IBGE</span>
-        <span>✅ Gera UPDATE simples sem COD_PESS</span>
-        <span>✅ Gera INSERT OR UPDATE com COD_PESS inicial configurável, usando MATCHING por CNPJ</span>
-        <span>✅ Permite marcar o cadastro como Cliente, Fornecedor ou Cliente e Fornecedor</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Tabela -->
-  <section class="card">
-    <div class="section-title">Resultado das consultas</div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th>CNPJ</th>
-            <th>Razão Social</th>
-            <th>IE</th>
-            <th>Contrib. ICMS</th>
-            <th>Endereço</th>
-            <th>Cidade/UF</th>
-            <th>CEP</th>
-            <th>Erro</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- SQL gerado -->
-  <section class="card">
-    <div class="section-title">SQL gerado</div>
-    <textarea id="sqlOutput" readonly placeholder="O SQL gerado aparecerá aqui..."></textarea>
-  </section>
-
+<section class="steps"><div class="step active"><strong>1</strong>CNPJs</div><div class="step"><strong>2</strong>Base Redsis</div><div class="step"><strong>3</strong>Consultar</div><div class="step"><strong>4</strong>Comparar</div><div class="step"><strong>5</strong>Revisar</div><div class="step"><strong>6</strong>Gerar SQL</div></section>
+<section class="metrics">
+<div class="metric"><div class="metric-title">CNPJs válidos</div><div class="metric-value info" id="mValidos">0</div></div>
+<div class="metric"><div class="metric-title">Base Redsis</div><div class="metric-value" id="mBase">0</div></div>
+<div class="metric"><div class="metric-title">Novos</div><div class="metric-value info" id="mNovos">0</div></div>
+<div class="metric"><div class="metric-title">Existentes</div><div class="metric-value ok" id="mExistentes">0</div></div>
+<div class="metric"><div class="metric-title">Sem alteração</div><div class="metric-value ok" id="mIguais">0</div></div>
+<div class="metric"><div class="metric-title">Com divergências</div><div class="metric-value warn" id="mDivergencias">0</div></div>
+<div class="metric"><div class="metric-title">Revisão</div><div class="metric-value warn" id="mRevisao">0</div></div>
+<div class="metric"><div class="metric-title">Erros</div><div class="metric-value err" id="mErros">0</div></div>
+</section>
+<section class="card"><div class="section-title">Progresso</div><div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div><div class="progress-line"><span class="small" id="progressText">Carregue os CNPJs e, de preferência, a base atual da PESSOAS.</span><span class="small" id="progressPct">0%</span></div></section>
+<section class="split">
+<div class="card"><div class="section-title">1. Entrada de CNPJs</div><p class="small">Cole ou importe TXT/CSV. Dígitos verificadores são validados e duplicados são removidos.</p><textarea id="cnpjInput" placeholder="12.345.678/0001-90"></textarea><div class="controls" style="margin-top:10px"><input type="file" id="fileInput" accept=".txt,.csv"><button onclick="carregarLista()">Validar lista</button><button class="primary" id="btnStart" onclick="iniciarConsultas()">Consultar válidos</button><button class="danger" id="btnStop" onclick="pararConsultas()" disabled>Parar</button></div><div class="summary-line" id="importSummary"></div></div>
+<div class="card"><div class="section-title">2. Base atual da PESSOAS</div><p class="small">Importe um CSV/TXT exportado do Firebird/IBExpert. O cabeçalho deve conter pelo menos <b>CNPJCPF_PESS</b>. Quanto mais campos houver, melhor será a comparação.</p><textarea id="baseInput" placeholder="COD_PESS;CNPJCPF_PESS;NOM_PESS;FANT_PESS;IE_PESS;END_PESS;NUM_PESS;..."></textarea><div class="controls" style="margin-top:10px"><input type="file" id="baseFile" accept=".txt,.csv"><button onclick="carregarBase()">Carregar base Redsis</button><button class="ghost" onclick="mostrarSqlExportacao()">Ver SELECT para exportar</button></div><div class="summary-line" id="baseSummary"></div><div class="notice info">A base é usada apenas no navegador para identificar <b>novo/existente</b> e calcular divergências. Nada é enviado além das consultas de CNPJ já realizadas pela aplicação.</div></div>
+</section>
+<section class="split">
+<div class="card"><div class="section-title">3. Regras de geração</div><div class="controls">
+<div class="field"><label>Modo de SQL</label><select id="tipoSql" onchange="configMudou()"><option value="SMART" selected>Inteligente: UPDATE existentes + INSERT novos</option><option value="UPDATE">Somente UPDATE</option><option value="UPSERT">UPDATE OR INSERT</option></select></div>
+<div class="field"><label>Cadastro</label><select id="tipoCadastro" onchange="configMudou()"><option value="CLIENTE" selected>Cliente</option><option value="FORNECEDOR">Fornecedor</option><option value="AMBOS">Cliente e fornecedor</option></select></div>
+<div class="field" id="codStrategyGroup"><label>COD_PESS para novos</label><select id="codStrategy" onchange="configMudou()"><option value="AUTO" selected>Automático: MAX(COD_PESS)+1</option><option value="MANUAL">Manual</option></select></div>
+<div class="field" id="codManualGroup" style="display:none"><label>COD_PESS inicial</label><input type="number" id="codInicio" min="1" onchange="regenerarSQL()"></div>
+<div class="field"><label>Estratégia de consulta</label><select id="apiStrategy" onchange="persistirEstado()"><option value="AUTO" selected>Automático: CNPJ.ws (IE) → BrasilAPI → Minha Receita</option><option value="CNPJWS">Somente CNPJ.ws (com IE)</option><option value="BRASILAPI">Somente BrasilAPI</option><option value="MINHARECEITA">Somente Minha Receita</option></select></div><div class="field"><label>Intervalo API</label><select id="delay"><option value="3000">3 segundos</option><option value="5000">5 segundos</option><option value="10000" selected>10 segundos</option><option value="15000">15 segundos</option><option value="30000">30 segundos</option><option value="60000">60 segundos</option></select></div><div class="field"><label>Retentativas por API</label><select id="maxRetries"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="5">5</option></select></div></div><div class="notice info"><b>Fallback de consulta:</b> no modo Automático, a ferramenta tenta primeiro <b>CNPJ.ws</b>, pois é a fonte usada hoje e pode retornar Inscrição Estadual. Se ela falhar, limitar a consulta ou não encontrar o CNPJ, tenta <b>BrasilAPI</b> e depois <b>Minha Receita</b>. As fontes alternativas podem não fornecer IE; nesse caso o campo fica preservado em cadastros existentes.</div>
+<div class="switch-row"><input type="checkbox" id="preservarVazios" checked onchange="recalcularTudo()"><label for="preservarVazios"><b>Preservar dados existentes quando API vier vazia</b><span>Campos sem valor oficial não apagam informação já cadastrada.</span></label></div>
+<div class="switch-row"><input type="checkbox" id="incluirNaoAtivos" onchange="recalcularTudo()"><label for="incluirNaoAtivos"><b>Permitir SQL para CNPJ não ativo</b><span>Por padrão BAIXADO, INAPTO, SUSPENSO etc. ficam fora da geração.</span></label></div>
+<div class="switch-row"><input type="checkbox" id="situacaoSempreAtivo" onchange="recalcularTudo()"><label for="situacaoSempreAtivo"><b>Forçar SIT_PESS = 'ATIVO'</b><span>Se desmarcado, a situação é mapeada a partir da Receita.</span></label></div>
+<div class="notice warning">No modo automático, novos registros são inseridos em um <b>EXECUTE BLOCK</b> que calcula <b>MAX(COD_PESS)+1</b> no momento da execução e ainda verifica se o CNPJ já existe. Isso elimina a digitação manual do código, mas execute o lote sem outro processo cadastrando pessoas simultaneamente.</div>
+</div>
+<div class="card"><div class="section-title">4. Campos permitidos no UPDATE</div><p class="small">Marque globalmente o que pode ser alterado. Na comparação de cada empresa você ainda pode ligar/desligar campos individualmente.</p><div class="field-grid" id="fieldGrid"></div><div class="controls" style="margin-top:10px"><button onclick="marcarCampos(true)">Marcar todos</button><button onclick="marcarCampos(false)">Desmarcar todos</button><button onclick="marcarCamposSeguro()">Perfil seguro</button></div><div class="notice info">Para registros <b>novos</b>, os campos cadastrais disponíveis são incluídos no INSERT. Esta seleção controla principalmente o que pode ser alterado em cadastros já existentes.</div></div>
+</section>
+<section class="card"><div class="section-title">5. Revisão Redsis × Receita</div><div id="baseWarning" class="notice warning" style="display:none;margin-bottom:10px"></div><div class="summary-line" id="reviewSummary"></div><div class="table-tools" style="margin-top:10px"><button onclick="selecionarTodos(true)">Selecionar todos</button><button onclick="selecionarTodos(false)">Desmarcar todos</button><button id="btnRetryErrors" onclick="reprocessarErros()">Reprocessar erros</button><select id="filtroOrigem" onchange="renderTabela()"><option value="TODOS">Base: Todos</option><option value="NOVO">Base: Novos</option><option value="EXISTENTE">Base: Existentes</option><option value="DESCONHECIDO">Base: Sem base Redsis</option></select><select id="filtroStatus" onchange="renderTabela()"><option value="TODOS">Status: Todos</option><option value="PRONTO">Status: Pronto</option><option value="REVISAO">Status: Revisão</option><option value="ERRO">Status: Erro</option><option value="SEM_ALTERACAO">Status: Sem alteração</option></select><span class="toolbar-spacer"></span><button class="success" id="btnGerarSql" onclick="baixarSQL()">Gerar SQL (0)</button><button onclick="baixarCSV()">Baixar relatório CSV</button><button class="danger" onclick="limparTudo()">Limpar</button></div><div class="table-wrap"><table><thead><tr><th>Gerar</th><th>Base</th><th>Status</th><th>CNPJ</th><th>Empresa / Receita</th><th>API</th><th>Situação</th><th>Divergências</th><th>Mudanças / motivo</th><th>Ações</th></tr></thead><tbody id="tbody"></tbody></table></div></section>
+<section class="card"><div class="section-title">6. SQL final</div><p class="small" id="sqlResumo">Nenhum registro elegível.</p><textarea class="sql-area" id="sqlOutput" readonly></textarea></section>
 </main>
-
+<dialog id="detailDialog"><div class="modal-head"><strong id="detailTitle">Detalhes</strong><button class="modal-close" onclick="detailDialog.close()">Fechar</button></div><div class="modal-body" id="detailBody"></div></dialog>
 <script>
-  // ── Tamanho da IE por UF ──────────────────────────────────────────────────
-  const IE_TAMANHO = {
-    AC:13, AL:9,  AM:9,  AP:9,  BA:8,  CE:9,  DF:13, ES:9,  GO:9,
-    MA:9,  MG:13, MS:9,  MT:11, PA:9,  PB:9,  PE:9,  PI:9,  PR:10,
-    RJ:8,  RN:10, RO:13, RR:9,  RS:10, SC:9,  SE:9,  SP:12, TO:9
-  };
+const $=id=>document.getElementById(id);const STORAGE_KEY='redsis_cnpj_v43_state';let lista=[],invalidos=[],resultados=[],baseMap=new Map(),baseLinhas=[],indiceAtual=0,rodando=false,adaptiveDelayMs=0;
+const API_PROVIDERS={CNPJWS:{id:'CNPJWS',nome:'CNPJ.ws',ie:true,url:c=>`https://publica.cnpj.ws/cnpj/${c}`},BRASILAPI:{id:'BRASILAPI',nome:'BrasilAPI',ie:false,url:c=>`https://brasilapi.com.br/api/cnpj/v1/${c}`},MINHARECEITA:{id:'MINHARECEITA',nome:'Minha Receita',ie:false,url:c=>`https://minhareceita.org/${c}`}};
+const IE_TAMANHO={AC:13,AL:9,AM:9,AP:9,BA:8,CE:9,DF:13,ES:9,GO:9,MA:9,MG:13,MS:9,MT:11,PA:9,PB:9,PE:9,PI:9,PR:10,RJ:8,RN:10,RO:13,RR:9,RS:10,SC:9,SE:9,SP:12,TO:9};
+const FIELD_DEFS=[
+{key:'razao_social',db:'NOM_PESS',label:'Razão social',kind:'text'},
+{key:'nome_fantasia',db:'FANT_PESS',label:'Fantasia',kind:'text'},
+{key:'ie',db:'IE_PESS',label:'Inscrição estadual',kind:'ie'},
+{key:'logradouro',db:'END_PESS',label:'Endereço',kind:'text'},
+{key:'numero',db:'NUM_PESS',label:'Número',kind:'number'},
+{key:'complemento',db:'COMPL_PESS',label:'Complemento',kind:'text'},
+{key:'bairro',db:'BAIRRO_PESS',label:'Bairro',kind:'text'},
+{key:'cidade',db:'MUN_PESS',label:'Município',kind:'text'},
+{key:'estado',db:'UF_PESS',label:'UF',kind:'text'},
+{key:'cep',db:'CEP_PESS',label:'CEP',kind:'digits'},
+{key:'telefone1',db:'FONE_PESS',label:'Telefone 1',kind:'digits'},
+{key:'telefone2',db:'FONE2_PESS',label:'Telefone 2',kind:'digits'},
+{key:'email',db:'EMAIL_PESS',label:'E-mail',kind:'lower'},
+{key:'situacao_db',db:'SIT_PESS',label:'Situação',kind:'upper'},
+{key:'tipo',db:'TIPO_PESS',label:'Tipo',kind:'text'},
+{key:'cnae',db:'CNAEP_PESS',label:'CNAE',kind:'digits'}];
+const DEFAULT_SAFE=new Set(['razao_social','nome_fantasia','ie','logradouro','numero','complemento','bairro','cidade','estado','cep','telefone1','telefone2','email','cnae']);
+function initFields(){const g=$('fieldGrid');g.innerHTML=FIELD_DEFS.map(f=>`<label class="field-chip"><input type="checkbox" data-field="${f.key}" ${DEFAULT_SAFE.has(f.key)?'checked':''} onchange="recalcularTudo()">${f.label}</label>`).join('')}
+function globalFieldEnabled(k){const el=document.querySelector(`[data-field="${k}"]`);return !!el?.checked}function marcarCampos(v){document.querySelectorAll('[data-field]').forEach(x=>x.checked=v);recalcularTudo()}function marcarCamposSeguro(){document.querySelectorAll('[data-field]').forEach(x=>x.checked=DEFAULT_SAFE.has(x.dataset.field));recalcularTudo()}
+function somenteNumero(v){return String(v??'').replace(/\D/g,'')}function limparTexto(v){if(v===null||v===undefined)return null;const s=String(v).replace(/[\u0000-\u001f]+/g,' ').replace(/\s+/g,' ').trim();return s||null}function temValor(v){if(v===null||v===undefined)return false;if(typeof v==='string')return v.trim()!=='';if(Array.isArray(v))return v.length>0;return true}function normalText(v){return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase()}function normal(v,kind){if(v===null||v===undefined)return '';if(kind==='ie'){const n=somenteNumero(v);return n.replace(/^0+(?=\d)/,'')}if(kind==='digits'||kind==='number')return somenteNumero(v);if(kind==='lower')return String(v).trim().toLowerCase();if(kind==='upper')return String(v).trim().toUpperCase();return normalText(v)}function isEmail(v){return !v||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).trim())}function sanitizarCep(v){const n=somenteNumero(v);return n.length===8?n:null}function sanitizarFone(v){const n=somenteNumero(v);if(!n||/^0+$/.test(n)||n.length<10||n.length>13)return null;return n}function montarFone(ddd,tel){const t=somenteNumero(tel);if(!t||/^0+$/.test(t))return null;return sanitizarFone(somenteNumero(ddd)+t)}function sqlTexto(v){const t=limparTexto(v);return t?`'${t.replace(/'/g,"''")}'`:'NULL'}function sqlNumero(v){const n=somenteNumero(v);return n||'NULL'}function sleep(ms){return new Promise(r=>setTimeout(r,ms))}function escapeHtml(v){return String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]))}
+function validarCnpj(cnpj){const n=somenteNumero(cnpj);if(n.length!==14||/^(\d)\1{13}$/.test(n))return false;const calc=t=>{let soma=0,p=t.length-7;for(const d of t){soma+=Number(d)*p--;if(p<2)p=9}const r=soma%11;return r<2?0:11-r};return calc(n.slice(0,12))===Number(n[12])&&calc(n.slice(0,13))===Number(n[13])}
+function tratarIEValor(ie,uf){let n=somenteNumero(ie);if(!n)return 'ISENTO';const tam=IE_TAMANHO[String(uf||'').toUpperCase()];if(tam&&n.length<tam)n=n.padStart(tam,'0');return n}function escolherIE(ies,uf){if(!Array.isArray(ies)||!ies.length)return null;const up=String(uf||'').toUpperCase(),c=ies.filter(x=>x&&x.inscricao_estadual);return c.find(x=>{const xu=String(x.estado?.sigla||x.uf||'').toUpperCase(),st=String(x.ativo??x.situacao??'').toUpperCase();return (!up||!xu||xu===up)&&(x.ativo===true||st==='ATIVA'||st==='ATIVO')})||c.find(x=>!up||!String(x.estado?.sigla||x.uf||'').toUpperCase()||String(x.estado?.sigla||x.uf||'').toUpperCase()===up)||c[0]||null}function situacaoAtiva(s){return normalText(s)==='ATIVA'||normalText(s)==='ATIVO'}function situacaoDb(r){return $('situacaoSempreAtivo').checked?'ATIVO':(situacaoAtiva(r.situacao)?'ATIVO':'INATIVO')}function contbicmsValor(ie){return ie&&ie!=='ISENTO'?'S':'N'}
+async function readFile(file,target){if(!file)return;$(target).value=await file.text()}$('fileInput').addEventListener('change',e=>readFile(e.target.files[0],'cnpjInput'));$('baseFile').addEventListener('change',e=>readFile(e.target.files[0],'baseInput'));
+function carregarLista(){const parts=$('cnpjInput').value.split(/[\s;,|]+/).filter(Boolean),seen=new Set(),anteriores=new Map(resultados.map(r=>[r.cnpj,r]));lista=[];invalidos=[];for(const p of parts){const n=somenteNumero(p);if(n.length!==14||!validarCnpj(n)){if(n)invalidos.push(n);continue}if(!seen.has(n)){seen.add(n);lista.push(n)}}resultados=lista.map(c=>anteriores.get(c)).filter(Boolean);indiceAtual=new Set(resultados.map(r=>r.cnpj)).size;renderImportSummary();atualizarTudo();regenerarSQL();persistirEstado()}
+function renderImportSummary(){$('importSummary').innerHTML=`<span class="summary-chip">Válidos: ${lista.length}</span><span class="summary-chip">Inválidos: ${invalidos.length}</span>`}
+function detectDelimiter(line){const opts=[';','\t',','];return opts.sort((a,b)=>(line.split(b).length-line.split(a).length))[0]}function parseLine(line,d){const out=[];let cur='',q=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(q&&line[i+1]==='"'){cur+='"';i++}else q=!q}else if(c===d&&!q){out.push(cur.trim());cur=''}else cur+=c}out.push(cur.trim());return out}function normalizeHeader(h){return normalText(h).replace(/[^A-Z0-9_]/g,'')}
+function carregarBase(){const txt=$('baseInput').value.replace(/^\uFEFF/,'').trim();baseMap=new Map();baseLinhas=[];if(!txt){renderBaseSummary();associarBase();return}const lines=txt.split(/\r?\n/).filter(x=>x.trim());if(lines.length<2){alert('A base precisa ter cabeçalho e pelo menos uma linha.');return}const d=detectDelimiter(lines[0]),headers=parseLine(lines[0],d).map(normalizeHeader);let cnpjIdx=headers.findIndex(h=>['CNPJCPF_PESS','CNPJ','CNPJCPF'].includes(h));if(cnpjIdx<0){alert('Não encontrei a coluna CNPJCPF_PESS/CNPJ no cabeçalho.');return}for(const line of lines.slice(1)){const vals=parseLine(line,d),o={};headers.forEach((h,i)=>o[h]=vals[i]??'');const cnpj=somenteNumero(vals[cnpjIdx]);if(cnpj.length!==14)continue;o.CNPJCPF_PESS=cnpj;baseMap.set(cnpj,o);baseLinhas.push(o)}renderBaseSummary();associarBase();atualizarTudo();renderTabela();regenerarSQL()}
+function renderBaseSummary(){$('baseSummary').innerHTML=`<span class="summary-chip">Registros carregados: ${baseMap.size}</span><span class="summary-chip">CNPJs da consulta encontrados: ${lista.filter(c=>baseMap.has(c)).length}</span>`}
+function baseVal(b,db){if(!b)return null;return b[db]??b[normalizeHeader(db)]??null}
+function associarBase(){for(const r of resultados){r.base=baseMap.get(r.cnpj)||null;r.origem=r.base?'EXISTENTE':(baseMap.size?'NOVO':'DESCONHECIDO');recalcularRegistro(r)}}
+function resultadoIndex(cnpj){return resultados.findIndex(r=>r.cnpj===cnpj)}function upsertResultado(r){const i=resultadoIndex(r.cnpj);if(i>=0)resultados[i]=r;else resultados.push(r);indiceAtual=new Set(resultados.map(x=>x.cnpj)).size;persistirEstado()}
+function persistirEstado(){try{const state={lista,invalidos,resultados:resultados.map(r=>{const c={...r};delete c.base;delete c.diffs;delete c.changed;delete c.allChanged;delete c.issues;return c}),cnpjInput:$('cnpjInput')?.value||'',apiStrategy:$('apiStrategy')?.value||'AUTO',savedAt:Date.now()};localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){console.warn('Nao foi possivel salvar o progresso local.',e)}}
+function restaurarEstado(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return false;const st=JSON.parse(raw);if(!Array.isArray(st.lista)||!Array.isArray(st.resultados))return false;lista=st.lista;invalidos=Array.isArray(st.invalidos)?st.invalidos:[];resultados=st.resultados;indiceAtual=new Set(resultados.map(r=>r.cnpj)).size;if($('cnpjInput')&&!$('cnpjInput').value&&st.cnpjInput)$('cnpjInput').value=st.cnpjInput;if($('apiStrategy')&&st.apiStrategy)$('apiStrategy').value=st.apiStrategy;associarBase();renderImportSummary();atualizarTudo();renderTabela();regenerarSQL();if(resultados.length&&$('progressText'))$('progressText').textContent=`Progresso restaurado: ${resultados.filter(r=>r.status==='OK').length} sucesso(s), ${resultados.filter(r=>r.status==='ERRO').length} erro(s). Clique em Consultar válidos para continuar sem repetir os sucessos.`;return true}catch(e){console.warn('Nao foi possivel restaurar o progresso local.',e);return false}}
+function retryAfterMs(resp,attempt){const h=resp.headers.get('Retry-After');if(h){const n=Number(h);if(Number.isFinite(n))return Math.max(1000,n*1000);const d=Date.parse(h);if(Number.isFinite(d))return Math.max(1000,d-Date.now())}const base=Math.max(Number($('delay').value)||10000,10000);return Math.min(120000,base*Math.pow(2,Math.max(0,attempt-1)))}
+function apiOrder(){const st=$('apiStrategy')?.value||'AUTO';return st==='AUTO'?['CNPJWS','BRASILAPI','MINHARECEITA']:[st]}
+function apiBadge(id){const p=API_PROVIDERS[id];if(!p)return '<span class="badge badge-neutral">N/I</span>';return `<span class="badge ${id==='CNPJWS'?'badge-info':'badge-neutral'}">${escapeHtml(p.nome)}${p.ie?' • IE':''}</span>`}
+function digitsOrNull(v){const d=somenteNumero(v);return d||null}
+function normalizeCnpjWs(data,cnpj){const est=data.estabelecimento||{},cidade=est.cidade||{},estado=est.estado||{},uf=estado.sigla||null,ieObj=escolherIE(est.inscricoes_estaduais||[],uf),cnae=est.atividade_principal||{},email=temValor(est.email)?String(est.email).trim():null;return{status:'OK',cnpj,razao_social:data.razao_social||null,nome_fantasia:est.nome_fantasia||null,ie_raw:ieObj?.inscricao_estadual||null,ie:tratarIEValor(ieObj?.inscricao_estadual,uf),logradouro:est.logradouro||null,numero:est.numero||null,complemento:est.complemento||null,bairro:est.bairro||null,cidade:cidade.nome||null,ibge_id:cidade.ibge_id?String(cidade.ibge_id):null,estado:uf,cep:sanitizarCep(est.cep),telefone1:montarFone(est.ddd1,est.telefone1),telefone2:montarFone(est.ddd2,est.telefone2),email:isEmail(email)?email:null,email_original:email,situacao:est.situacao_cadastral||null,tipo:est.tipo||null,cnae:cnae.id||cnae.codigo||null}}
+function normalizeBrasilApi(data,cnpj){const email=temValor(data.email)?String(data.email).trim():null;return{status:'OK',cnpj,razao_social:data.razao_social||data.nome||null,nome_fantasia:data.nome_fantasia||data.fantasia||null,ie_raw:null,ie:null,logradouro:data.logradouro||null,numero:data.numero||null,complemento:data.complemento||null,bairro:data.bairro||null,cidade:data.municipio||null,ibge_id:digitsOrNull(data.codigo_municipio_ibge||data.codigo_municipio),estado:data.uf||null,cep:sanitizarCep(data.cep),telefone1:sanitizarFone(data.ddd_telefone_1||data.telefone),telefone2:sanitizarFone(data.ddd_telefone_2),email:isEmail(email)?email:null,email_original:email,situacao:data.descricao_situacao_cadastral||data.situacao_cadastral||null,tipo:data.descricao_identificador_matriz_filial||data.tipo||null,cnae:digitsOrNull(data.cnae_fiscal)||null}}
+function normalizeMinhaReceita(data,cnpj){const email=temValor(data.email)?String(data.email).trim():null;return{status:'OK',cnpj,razao_social:data.razao_social||null,nome_fantasia:data.nome_fantasia||null,ie_raw:null,ie:null,logradouro:data.logradouro||null,numero:data.numero||null,complemento:data.complemento||null,bairro:data.bairro||null,cidade:data.municipio||null,ibge_id:digitsOrNull(data.codigo_municipio_ibge||data.codigo_municipio),estado:data.uf||null,cep:sanitizarCep(data.cep),telefone1:sanitizarFone(data.ddd_telefone_1),telefone2:sanitizarFone(data.ddd_telefone_2),email:isEmail(email)?email:null,email_original:email,situacao:data.descricao_situacao_cadastral||data.situacao_cadastral||null,tipo:data.descricao_identificador_matriz_filial||null,cnae:digitsOrNull(data.cnae_fiscal)||null}}
+function normalizarProvider(id,data,cnpj){if(id==='CNPJWS')return normalizeCnpjWs(data,cnpj);if(id==='BRASILAPI')return normalizeBrasilApi(data,cnpj);if(id==='MINHARECEITA')return normalizeMinhaReceita(data,cnpj);throw new Error('API desconhecida')}
+async function consultarProvider(providerId,cnpj,onWait=null){const p=API_PROVIDERS[providerId],maxRetries=Number($('maxRetries')?.value||2);let tentativa=0,lastError='';while(tentativa<=maxRetries){tentativa++;try{const resp=await fetch(p.url(cnpj),{cache:'no-store',headers:{'Accept':'application/json'}});if(resp.status===429){const wait=retryAfterMs(resp,tentativa);adaptiveDelayMs=Math.max(adaptiveDelayMs,wait);lastError=`HTTP 429 em ${p.nome}`;if(tentativa<=maxRetries){if(onWait)onWait(wait,tentativa,maxRetries,p.nome);await sleep(wait);continue}return{ok:false,status:429,erro:lastError,tentativas:tentativa,retry_after_ms:wait}}if(resp.status===404||resp.status===400)return{ok:false,status:resp.status,erro:`${p.nome}: CNPJ não encontrado/aceito`,tentativas:tentativa};if(!resp.ok){lastError=`HTTP ${resp.status} em ${p.nome}`;if(tentativa<=maxRetries){const wait=Math.min(30000,Math.max(Number($('delay').value)||10000,3000)*tentativa);if(onWait)onWait(wait,tentativa,maxRetries,p.nome);await sleep(wait);continue}return{ok:false,status:resp.status,erro:lastError,tentativas:tentativa}}const data=await resp.json();if(data?.status==='ERROR'||data?.erro===true)return{ok:false,status:422,erro:`${p.nome}: ${data.message||data.mensagem||'resposta sem dados válidos'}`,tentativas:tentativa};const r=normalizarProvider(providerId,data,cnpj);if(!temValor(r.razao_social)&&!temValor(r.nome_fantasia))return{ok:false,status:422,erro:`${p.nome}: resposta sem dados cadastrais suficientes`,tentativas:tentativa};return{ok:true,registro:r,tentativas:tentativa}}catch(e){lastError=`${p.nome}: ${e.message||'falha de rede'}`;if(tentativa<=maxRetries){const wait=Math.min(30000,Math.max(Number($('delay').value)||10000,3000)*tentativa);if(onWait)onWait(wait,tentativa,maxRetries,p.nome);await sleep(wait);continue}return{ok:false,status:0,erro:lastError,tentativas:tentativa}}}return{ok:false,status:0,erro:lastError||`${p.nome}: falha desconhecida`,tentativas:tentativa}}
+async function consultarCNPJ(cnpj,onWait=null){const ordem=apiOrder(),falhas=[];let totalTentativas=0;for(let pi=0;pi<ordem.length;pi++){const providerId=ordem[pi],p=API_PROVIDERS[providerId];if(onWait&&pi>0)onWait(0,0,0,`Fallback → ${p.nome}`);const res=await consultarProvider(providerId,cnpj,onWait);totalTentativas+=res.tentativas||1;if(res.ok){adaptiveDelayMs=Math.max(0,Math.floor(adaptiveDelayMs*.5));const r=res.registro;r.api_provider=providerId;r.api_nome=p.nome;r.api_tem_ie=p.ie;r.api_fallback=pi>0;r.api_falhas_anteriores=falhas.slice();r.erro='';r.tentativas=totalTentativas;r.ultima_tentativa=new Date().toLocaleString('pt-BR');r.incluir=true;r.fieldSelection={};r.situacao_db=situacaoDb(r);r.base=baseMap.get(cnpj)||null;r.origem=r.base?'EXISTENTE':(baseMap.size?'NOVO':'DESCONHECIDO');recalcularRegistro(r);return r}falhas.push(res.erro||`${p.nome}: falha`)}return{status:'ERRO',cnpj,erro:`Todas as APIs falharam: ${falhas.join(' | ')}`,tentativas:totalTentativas||ordem.length,ultima_tentativa:new Date().toLocaleString('pt-BR'),incluir:false,fieldSelection:{},api_provider:null,api_nome:null,api_falhas_anteriores:falhas,origem:baseMap.size?(baseMap.has(cnpj)?'EXISTENTE':'NOVO'):'DESCONHECIDO'}}
+async function iniciarConsultas(){if(!lista.length)carregarLista();if(!lista.length){alert('Nenhum CNPJ válido.');return}if(rodando)return;const sucessos=new Set(resultados.filter(r=>r.status==='OK').map(r=>r.cnpj)),pendentes=lista.filter(c=>!sucessos.has(c));if(!pendentes.length){$('progressText').textContent='Todos os CNPJs válidos já foram consultados com sucesso.';return}rodando=true;$('btnStart').disabled=true;$('btnStop').disabled=false;for(let p=0;p<pendentes.length&&rodando;p++){const c=pendentes[p];$('progressText').textContent=`Consultando ${c} (${p+1}/${pendentes.length} pendentes)...`;const r=await consultarCNPJ(c,(wait,tentativa,max,api)=>{$('progressText').textContent=wait?`${api}: aguardando ${Math.ceil(wait/1000)}s antes da retentativa ${tentativa}/${max}. Progresso salvo...`:`${api} em uso para ${c}...`});upsertResultado(r);atualizarTudo();renderTabela();regenerarSQL();if(p<pendentes.length-1&&rodando){const delay=Math.max(Number($('delay').value)||10000,adaptiveDelayMs);$('progressText').textContent=`Aguardando ${Math.ceil(delay/1000)}s para a próxima consulta. Sucessos já concluídos não serão repetidos.`;await sleep(delay)}}rodando=false;$('btnStart').disabled=false;$('btnStop').disabled=true;persistirEstado();const faltam=lista.filter(c=>!resultados.some(r=>r.cnpj===c&&r.status==='OK')).length;$('progressText').textContent=!rodando&&faltam?`Processo finalizado/pausado com ${faltam} CNPJ(s) ainda sem sucesso. Clique em Consultar válidos para retomar.`:'Consultas concluídas. Revise as divergências.'}
+async function reprocessarUm(i){if(rodando)return;const antigo=resultados[i];if(!antigo||antigo.status!=='ERRO')return;rodando=true;$('btnStart').disabled=true;$('btnStop').disabled=false;const c=antigo.cnpj;$('progressText').textContent=`Reprocessando ${c}...`;const novo=await consultarCNPJ(c,(wait,tentativa,max,api)=>{$('progressText').textContent=wait?`${api}: aguardando ${Math.ceil(wait/1000)}s antes da retentativa ${tentativa}/${max}...`:`${api} em uso para ${c}...`});upsertResultado(novo);rodando=false;$('btnStart').disabled=false;$('btnStop').disabled=true;$('progressText').textContent=novo.status==='OK'?`${c} reprocessado com sucesso.`:`${c} continua com erro. O restante do progresso foi preservado.`;atualizarTudo();renderTabela();regenerarSQL()}
+async function reprocessarErros(){if(rodando)return;const erros=resultados.filter(r=>r.status==='ERRO').map(r=>r.cnpj);if(!erros.length){alert('Não há erros para reprocessar.');return}rodando=true;$('btnStart').disabled=true;$('btnStop').disabled=false;for(let p=0;p<erros.length&&rodando;p++){const c=erros[p];$('progressText').textContent=`Reprocessando erro ${p+1}/${erros.length}: ${c}`;const novo=await consultarCNPJ(c,(wait,tentativa,max,api)=>{$('progressText').textContent=wait?`${api}: aguardando ${Math.ceil(wait/1000)}s antes da retentativa ${tentativa}/${max}...`:`${api} em uso para ${c}...`});upsertResultado(novo);atualizarTudo();renderTabela();regenerarSQL();if(p<erros.length-1&&rodando){const delay=Math.max(Number($('delay').value)||10000,adaptiveDelayMs);await sleep(delay)}}rodando=false;$('btnStart').disabled=false;$('btnStop').disabled=true;persistirEstado();$('progressText').textContent='Reprocessamento concluído. Os sucessos foram preservados.'}function pararConsultas(){rodando=false;persistirEstado();$('progressText').textContent='Pausa solicitada. O progresso foi salvo localmente.'}
 
-  // ── Estado ────────────────────────────────────────────────────────────────
-  let lista = [], resultados = [], sqlGerado = [], rodando = false, indiceAtual = 0;
-  let codAtual = 1;
-  const apiBase = 'https://publica.cnpj.ws/cnpj/';
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  function somenteNumero(v) { return String(v || '').replace(/\D/g, ''); }
-
-  function limparTexto(v) {
-    if (!v) return null;
-    return String(v).replaceAll("'", '').trim() || null;
-  }
-
-  function sqlTexto(v) {
-    const t = limparTexto(v);
-    return t ? `'${t}'` : 'NULL';
-  }
-
-  function sqlNumero(v) {
-    const n = somenteNumero(v);
-    return n || 'NULL';
-  }
-
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-  function temIE(ie) {
-    return somenteNumero(ie || '').length > 0;
-  }
-
-  function contbicms(ie) {
-    return temIE(ie) ? "'S'" : "'N'";
-  }
-
-  /** IE com zeros à esquerda conforme tamanho padrão do estado */
-  function tratarIE(ie, uf) {
-    const num = somenteNumero(ie || '');
-    if (!num) return "'ISENTO'";
-    const tam = uf ? IE_TAMANHO[String(uf).toUpperCase()] : null;
-    const padded = (tam && num.length < tam) ? num.padStart(tam, '0') : num;
-    return `'${padded}'`;
-  }
-
-  /** Situação sempre ATIVO */
-  function normalizarSituacao() { return "'ATIVO'"; }
-
-  /** Nome do município em caixa alta via UPPER() */
-  function sqlMunNome(ibgeId) {
-    if (!ibgeId) return 'NULL';
-    return `(SELECT UPPER(NOM_MUN) FROM MUN WHERE CODIBGE_MUN = '${ibgeId}')`;
-  }
-
-  /** Código interno do município via IBGE */
-  function sqlMunCod(ibgeId) {
-    if (!ibgeId) return 'NULL';
-    return `(SELECT COD_MUN FROM MUN WHERE CODIBGE_MUN = '${ibgeId}')`;
-  }
-
-  /** Concatena DDD + número */
-  function montarFone(ddd, fone) {
-    const d = somenteNumero(ddd || '');
-    const f = somenteNumero(fone || '');
-    return (d || f) ? d + f : null;
-  }
-
-  // ── Carregar lista ────────────────────────────────────────────────────────
-  function carregarLista() {
-    const texto = document.getElementById('cnpjInput').value;
-    const bruta = texto.split(/\r?\n|;|,/).map(somenteNumero).filter(Boolean);
-
-    const unicos = [], vistos = new Set();
-    for (const doc of bruta) {
-      if (doc.length !== 14 || vistos.has(doc)) continue;
-      vistos.add(doc);
-      unicos.push(doc.padStart(14, '0'));
-    }
-
-    lista = unicos;
-    indiceAtual = 0;
-    resultados  = [];
-    sqlGerado   = [];
-    atualizarTela();
-    renderTabela();
-    document.getElementById('sqlOutput').value = '';
-  }
-
-  document.getElementById('fileInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      document.getElementById('cnpjInput').value = ev.target.result;
-      carregarLista();
-    };
-    reader.readAsText(file, 'UTF-8');
-  });
-
-  // ── Modo de geração SQL ───────────────────────────────────────────────────
-  function getTipoSql() {
-    return document.getElementById('tipoSql').value;
-  }
-
-  function getTipoCadastro() {
-    return document.getElementById('tipoCadastro').value;
-  }
-
-  function camposTipoCadastro() {
-    const tipoCadastro = getTipoCadastro();
-    if (tipoCadastro === 'CLIENTE') return ['CLIENT_PESS'];
-    if (tipoCadastro === 'FORNECEDOR') return ['FORN_PESS'];
-    return ['CLIENT_PESS', 'FORN_PESS'];
-  }
-
-  function valoresTipoCadastro() {
-    return camposTipoCadastro().map(() => "'S'");
-  }
-
-  function setTipoCadastroSQL(indent = '    ') {
-    return camposTipoCadastro()
-      .map(campo => `${indent}${campo} = 'S'`)
-      .join(',\n');
-  }
-
-  function labelTipoCadastro() {
-    const tipoCadastro = getTipoCadastro();
-    if (tipoCadastro === 'CLIENTE') return 'cliente';
-    if (tipoCadastro === 'FORNECEDOR') return 'fornecedor';
-    return 'cliente_fornecedor';
-  }
-
-  function aplicarModoSQL() {
-    const tipo = getTipoSql();
-    const codGroup = document.getElementById('codInicioGroup');
-    const codInput = document.getElementById('codInicio');
-    const sqlOutput = document.getElementById('sqlOutput');
-
-    const usaCodPess = tipo === 'INSERT_OR_UPDATE';
-    codGroup.style.display = usaCodPess ? 'inline-flex' : 'none';
-    codInput.disabled = !usaCodPess;
-
-    const label = labelTipoCadastro().replaceAll('_', ' e ');
-    sqlOutput.placeholder = usaCodPess
-      ? `Os INSERT OR UPDATE para ${label} aparecerão aqui...`
-      : `Os UPDATEs para ${label} aparecerão aqui...`;
-  }
-
-  // ── Iniciar / parar ───────────────────────────────────────────────────────
-  async function iniciarConsultas() {
-    if (!lista.length) carregarLista();
-    if (!lista.length) { alert('Informe ao menos um CNPJ válido com 14 dígitos.'); return; }
-
-    rodando = true;
-    const delay = Number(document.getElementById('delay').value);
-    const tipoSql = getTipoSql();
-
-    if (tipoSql === 'INSERT_OR_UPDATE') {
-      const codInput = Number(document.getElementById('codInicio').value);
-      if (!Number.isInteger(codInput) || codInput < 1) {
-        alert('Para gerar INSERT OR UPDATE, informe um COD_PESS inicial válido.');
-        rodando = false;
-        return;
-      }
-      codAtual = codInput;
-    }
-
-    while (rodando && indiceAtual < lista.length) {
-      const cnpj = lista[indiceAtual];
-      atualizarProgresso(`Consultando ${cnpj}...`);
-
-      const resultado = await consultarCNPJ(cnpj);
-      resultados.push(resultado);
-
-      if (resultado.status === 'OK') {
-        const sql = montarSQL(resultado);
-        sqlGerado.push(sql);
-        document.getElementById('sqlOutput').value = sqlGerado.join('\n\n');
-      }
-
-      indiceAtual++;
-      atualizarTela();
-      renderTabela();
-
-      if (indiceAtual < lista.length && rodando) {
-        atualizarProgresso(`Aguardando ${delay / 1000}s para próxima consulta...`);
-        await sleep(delay);
-      }
-    }
-
-    rodando = false;
-    atualizarProgresso('Processo finalizado ou pausado.');
-  }
-
-  function pararConsultas() {
-    rodando = false;
-    atualizarProgresso('Processo pausado pelo usuário.');
-  }
-
-  // ── Consulta API ──────────────────────────────────────────────────────────
-  async function consultarCNPJ(cnpj) {
-    try {
-      const resp = await fetch(apiBase + cnpj);
-
-      if (resp.status === 429) return { status: 'ERRO', cnpj, erro: '429 - Limite da API' };
-      if (!resp.ok)            return { status: 'ERRO', cnpj, erro: `${resp.status} - Falha na consulta` };
-
-      const data      = await resp.json();
-      const est       = data.estabelecimento || {};
-      const cidadeObj = est.cidade  || {};
-      const estadoObj = est.estado  || {};
-      const ies       = est.inscricoes_estaduais || [];
-      const cnaeObj   = est.atividade_principal  || {};
-
-      const uf     = estadoObj.sigla || null;
-      const ibgeId = cidadeObj.ibge_id ? String(cidadeObj.ibge_id) : null;
-
-      return {
-        status:        'OK',
-        cnpj,
-        razao_social:  data.razao_social      || null,
-        nome_fantasia: est.nome_fantasia       || null,
-        ie:            ies.length ? ies[0].inscricao_estadual : null,
-        logradouro:    est.logradouro          || null,
-        numero:        est.numero              || null,
-        complemento:   est.complemento         || null,
-        bairro:        est.bairro              || null,
-        cidade:        cidadeObj.nome          || null,
-        ibge_id:       ibgeId,
-        estado:        uf,
-        cep:           somenteNumero(est.cep   || ''),
-        telefone1:     montarFone(est.ddd1, est.telefone1),
-        telefone2:     montarFone(est.ddd2, est.telefone2),
-        email:         est.email               || null,
-        situacao:      est.situacao_cadastral  || null,
-        tipo:          est.tipo                || null,
-        cnae:          cnaeObj.id || cnaeObj.descricao || null,
-        erro:          ''
-      };
-    } catch (e) {
-      return { status: 'ERRO', cnpj, erro: e.message };
-    }
-  }
-
-  // ── Montar SQL ─────────────────────────────────────────────────────────────
-  function camposPessoaBase() {
-    return [
-      'CNPJCPF_PESS',
-      'NOM_PESS',
-      'FANT_PESS',
-      'IE_PESS',
-      'CONTBICMS_PESS',
-      'END_PESS',
-      'NUM_PESS',
-      'COMPL_PESS',
-      'BAIRRO_PESS',
-      'MUN_PESS',
-      'COD_MUN',
-      'UF_PESS',
-      'CEP_PESS',
-      'FONE_PESS',
-      'FONE2_PESS',
-      'EMAIL_PESS',
-      'SIT_PESS',
-      'TIPO_PESS',
-      'CNAEP_PESS',
-      'COD_PAIS',
-      'NOM_PAIS'
-    ];
-  }
-
-  function valoresPessoaBase(r) {
-    return [
-      `'${r.cnpj}'`,
-      sqlTexto(r.razao_social),
-      sqlTexto(r.nome_fantasia),
-      tratarIE(r.ie, r.estado),
-      contbicms(r.ie),
-      sqlTexto(r.logradouro),
-      sqlNumero(r.numero),
-      sqlTexto(r.complemento),
-      sqlTexto(r.bairro),
-      sqlMunNome(r.ibge_id),
-      sqlMunCod(r.ibge_id),
-      sqlTexto(r.estado),
-      r.cep ? `'${r.cep}'` : 'NULL',
-      sqlTexto(r.telefone1),
-      sqlTexto(r.telefone2),
-      sqlTexto(r.email),
-      normalizarSituacao(),
-      sqlTexto(r.tipo),
-      sqlTexto(r.cnae),
-      '1058',
-      `'BRASIL'`
-    ];
-  }
-
-  function montarInsertOrUpdateSQL(r) {
-    const campos = ['COD_PESS', ...camposPessoaBase(), ...camposTipoCadastro()];
-    const valores = [String(codAtual), ...valoresPessoaBase(r), ...valoresTipoCadastro()];
-    codAtual++;
-
-    return `UPDATE OR INSERT INTO PESSOAS (
-  ${campos.join(',\n  ')}
-) VALUES (
-  ${valores.join(',\n  ')}
-)
-MATCHING (CNPJCPF_PESS);`;
-  }
-
-  function montarUpdateSQL(r) {
-    return `UPDATE PESSOAS
-  SET
-    NOM_PESS       = ${sqlTexto(r.razao_social)},
-    FANT_PESS      = ${sqlTexto(r.nome_fantasia)},
-    IE_PESS        = ${tratarIE(r.ie, r.estado)},
-    CONTBICMS_PESS = ${contbicms(r.ie)},
-    END_PESS       = ${sqlTexto(r.logradouro)},
-    NUM_PESS       = ${sqlNumero(r.numero)},
-    COMPL_PESS     = ${sqlTexto(r.complemento)},
-    BAIRRO_PESS    = ${sqlTexto(r.bairro)},
-    MUN_PESS       = ${sqlMunNome(r.ibge_id)},
-    COD_MUN        = ${sqlMunCod(r.ibge_id)},
-    UF_PESS        = ${sqlTexto(r.estado)},
-    CEP_PESS       = ${r.cep ? `'${r.cep}'` : 'NULL'},
-    FONE_PESS      = ${sqlTexto(r.telefone1)},
-    FONE2_PESS     = ${sqlTexto(r.telefone2)},
-    EMAIL_PESS     = ${sqlTexto(r.email)},
-    SIT_PESS       = ${normalizarSituacao()},
-    TIPO_PESS      = ${sqlTexto(r.tipo)},
-    CNAEP_PESS     = ${sqlTexto(r.cnae)},
-    COD_PAIS       = 1058,
-    NOM_PAIS       = 'BRASIL',
-${setTipoCadastroSQL('    ')}
-  WHERE CNPJCPF_PESS = '${r.cnpj}';`;
-  }
-
-  function montarSQL(r) {
-    return getTipoSql() === 'INSERT_OR_UPDATE'
-      ? montarInsertOrUpdateSQL(r)
-      : montarUpdateSQL(r);
-  }
-
-  // ── UI ─────────────────────────────────────────────────────────────────────
-  function atualizarTela() {
-    const total = lista.length;
-    const ok    = resultados.filter(r => r.status === 'OK').length;
-    const erros = resultados.filter(r => r.status === 'ERRO').length;
-
-    document.getElementById('mTotal').innerText   = total;
-    document.getElementById('mValidos').innerText = total;
-    document.getElementById('mOk').innerText      = ok;
-    document.getElementById('mErros').innerText   = erros;
-
-    const perc = total ? Math.round((indiceAtual / total) * 100) : 0;
-    document.getElementById('progressBar').style.width = perc + '%';
-    document.getElementById('progressText').innerText  = `${indiceAtual}/${total} processados (${perc}%)`;
-  }
-
-  function atualizarProgresso(msg) {
-    document.getElementById('progressText').innerText = msg;
-  }
-
-  function renderTabela() {
-    const tbody = document.getElementById('tbody');
-    tbody.innerHTML = '';
-
-    for (const r of resultados) {
-      const tr    = document.createElement('tr');
-      const badge = r.status === 'OK'
-        ? '<span class="badge badge-ok">OK</span>'
-        : '<span class="badge badge-erro">ERRO</span>';
-
-      const ieFormatada = r.status === 'OK'
-        ? tratarIE(r.ie, r.estado).replaceAll("'", '')
-        : '';
-
-      const icms = r.status === 'OK'
-        ? contbicms(r.ie).replaceAll("'", '')
-        : '';
-
-      tr.innerHTML = `
-        <td>${badge}</td>
-        <td>${r.cnpj || ''}</td>
-        <td>${r.razao_social || ''}</td>
-        <td>${ieFormatada || 'ISENTO'}</td>
-        <td>${icms}</td>
-        <td>${[r.logradouro, r.numero, r.complemento, r.bairro].filter(Boolean).join(', ')}</td>
-        <td>${[r.cidade ? r.cidade.toUpperCase() : '', r.estado].filter(Boolean).join(' / ')}</td>
-        <td>${r.cep || ''}</td>
-        <td>${r.erro || ''}</td>
-      `;
-      tbody.appendChild(tr);
-    }
-  }
-
-  // ── Downloads ──────────────────────────────────────────────────────────────
-  function baixarSQL() {
-    const prefixo = getTipoSql() === 'INSERT_OR_UPDATE' ? 'pessoas_insert_or_update' : 'pessoas_update';
-    const nome = `${prefixo}_${labelTipoCadastro()}.sql`;
-    baixarArquivo(nome, document.getElementById('sqlOutput').value || '', 'text/sql');
-  }
-
-  function baixarCSV() {
-    const header = ['status','cnpj','razao_social','ie','contbicms','logradouro','numero','bairro','cidade','estado','cep','ibge_id','erro'];
-    const linhas = resultados.map(r => {
-      const linha = {
-        ...r,
-        contbicms: r.status === 'OK' ? contbicms(r.ie).replaceAll("'", '') : ''
-      };
-      return header.map(c => `"${String(linha[c] || '').replaceAll('"', '""')}"`).join(';');
-    });
-    baixarArquivo('relatorio_cnpj.csv', [header.join(';'), ...linhas].join('\n'), 'text/csv');
-  }
-
-  function baixarArquivo(nome, conteudo, tipo) {
-    const blob = new Blob([conteudo], { type: tipo + ';charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = nome;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function limparTudo() {
-    if (!confirm('Deseja limpar todos os dados da tela?')) return;
-    lista = []; resultados = []; sqlGerado = []; indiceAtual = 0; rodando = false;
-    document.getElementById('cnpjInput').value = '';
-    document.getElementById('sqlOutput').value = '';
-    renderTabela();
-    atualizarTela();
-    aplicarModoSQL();
-  }
-
-  aplicarModoSQL();
-  document.addEventListener('DOMContentLoaded', aplicarModoSQL);
+function fieldApiValue(r,f){if(f.key==='situacao_db')return situacaoDb(r);return r[f.key]??null}function fieldBaseValue(r,f){return baseVal(r.base,f.db)}function diffField(r,f){const a=fieldApiValue(r,f),b=fieldBaseValue(r,f);if(!r.base)return{same:false,api:a,base:null,state:'new'};if($('preservarVazios').checked&&!temValor(a))return{same:true,api:a,base:b,state:'preserved'};const same=normal(a,f.kind)===normal(b,f.kind);return{same,api:a,base:b,state:same?'same':'changed'}}
+function fieldEnabledForRecord(r,k){if(!globalFieldEnabled(k))return false;if(Object.prototype.hasOwnProperty.call(r.fieldSelection||{},k))return r.fieldSelection[k];return true}
+function recalcularRegistro(r){if(r.status!=='OK')return;r.situacao_db=situacaoDb(r);r.diffs=FIELD_DEFS.map(f=>({f,...diffField(r,f)}));r.changed=r.diffs.filter(d=>!d.same&&fieldEnabledForRecord(r,d.f.key));r.allChanged=r.diffs.filter(d=>!d.same);r.issues=avaliarQualidade(r)}function recalcularTudo(){resultados.forEach(recalcularRegistro);atualizarTudo();renderTabela();regenerarSQL()}
+function avaliarQualidade(r){const issues=[];if(r.status!=='OK')return[{nivel:'erro',texto:r.erro||'Falha na consulta'}];if(!situacaoAtiva(r.situacao))issues.push({nivel:'erro',texto:`Situação cadastral: ${r.situacao||'não informada'}`});if(!r.ibge_id)issues.push({nivel:'erro',texto:'Código IBGE do município ausente'});if(!r.razao_social)issues.push({nivel:'erro',texto:'Razão social ausente'});if(!r.cep)issues.push({nivel:'warn',texto:'CEP ausente ou inválido'});if(!r.telefone1&&!r.email)issues.push({nivel:'warn',texto:'Sem telefone/e-mail válido'});if(r.email_original&&!isEmail(r.email_original))issues.push({nivel:'warn',texto:'E-mail inválido'});if(r.ie_raw&&!somenteNumero(r.ie_raw))issues.push({nivel:'warn',texto:'IE suspeita'});if(r.api_tem_ie===false)issues.push({nivel:'warn',texto:`Dados obtidos por ${r.api_nome||'API alternativa'}; essa fonte pode não fornecer Inscrição Estadual.`});if(r.api_fallback&&r.api_falhas_anteriores?.length)issues.push({nivel:'warn',texto:`Fallback utilizado após falha: ${r.api_falhas_anteriores.join(' | ')}`});return issues}
+function statusRegistro(r){if(r.status!=='OK')return'ERRO';if(r.incluir===false)return'EXCLUIDO';if(r.origem==='EXISTENTE'&&r.changed?.length===0)return'SEM_ALTERACAO';if(r.issues?.length)return'REVISAO';return'PRONTO'}function podeGerar(r){if(r.status!=='OK'||r.incluir===false)return false;if(!situacaoAtiva(r.situacao)&&!$('incluirNaoAtivos').checked)return false;if(r.origem==='EXISTENTE'&&r.changed?.length===0)return false;if($('tipoSql').value==='UPDATE'&&r.origem==='NOVO')return false;return true}
+function atualizarTudo(){const ok=resultados.filter(r=>r.status==='OK');$('mValidos').textContent=lista.length;$('mBase').textContent=baseMap.size;$('mNovos').textContent=ok.filter(r=>r.origem==='NOVO').length;$('mExistentes').textContent=ok.filter(r=>r.origem==='EXISTENTE').length;$('mIguais').textContent=ok.filter(r=>r.origem==='EXISTENTE'&&r.changed?.length===0).length;$('mDivergencias').textContent=ok.filter(r=>r.origem==='EXISTENTE'&&r.changed?.length>0).length;$('mRevisao').textContent=ok.filter(r=>statusRegistro(r)==='REVISAO').length;$('mErros').textContent=resultados.filter(r=>r.status==='ERRO').length;const processados=new Set(resultados.map(r=>r.cnpj)).size;indiceAtual=processados;const pct=lista.length?Math.round(processados/lista.length*100):0;$('progressBar').style.width=pct+'%';$('progressPct').textContent=pct+'%';const counts={PRONTO:0,REVISAO:0,ERRO:0,SEM_ALTERACAO:0,SEM_BASE:0};resultados.forEach(r=>{const st=statusRegistro(r);if(counts[st]!==undefined)counts[st]++;if(r.origem==='DESCONHECIDO')counts.SEM_BASE++});if($('reviewSummary'))$('reviewSummary').innerHTML=`<span class="summary-chip ok">${counts.PRONTO} prontos</span><span class="summary-chip warn">${counts.REVISAO} revisão</span><span class="summary-chip err">${counts.ERRO} erros</span><span class="summary-chip">${counts.SEM_ALTERACAO} sem alteração</span><span class="summary-chip">${counts.SEM_BASE} sem base</span>`;if($('baseWarning')){$('baseWarning').style.display=baseMap.size?'none':'block';$('baseWarning').innerHTML='<b>Base PESSOAS não carregada.</b> Importe a base Redsis para identificar NOVO/EXISTENTE, comparar divergências e usar a geração inteligente com segurança.'}const elegiveis=resultados.filter(podeGerar).length;if($('btnGerarSql')){$('btnGerarSql').textContent=`Gerar SQL (${elegiveis})`;$('btnGerarSql').disabled=elegiveis===0}if($('btnRetryErrors'))$('btnRetryErrors').disabled=counts.ERRO===0;renderBaseSummary()}
+function origemBadge(o){return o==='NOVO'?'<span class="badge badge-info">NOVO</span>':o==='EXISTENTE'?'<span class="badge badge-ok">EXISTENTE</span>':'<span class="badge badge-neutral">SEM BASE</span>'}function statusBadge(s){return s==='PRONTO'?'<span class="badge badge-ok">PRONTO</span>':s==='REVISAO'?'<span class="badge badge-warn">REVISÃO</span>':s==='SEM_ALTERACAO'?'<span class="badge badge-ok">SEM ALTERAÇÃO</span>':s==='EXCLUIDO'?'<span class="badge badge-neutral">EXCLUÍDO</span>':'<span class="badge badge-erro">ERRO</span>'}
+function renderTabela(){const t=$('tbody'),fo=$('filtroOrigem').value,fs=$('filtroStatus').value;t.innerHTML='';resultados.forEach((r,i)=>{const s=statusRegistro(r);if(fo!=='TODOS'&&r.origem!==fo)return;if(fs!=='TODOS'&&s!==fs)return;const semBase=r.origem==='DESCONHECIDO',changes=semBase?'Base Redsis não carregada':((r.changed||[]).slice(0,4).map(d=>d.f.label).join(', ')||'—'),count=r.changed?.length||0,tr=document.createElement('tr');if(r.incluir===false)tr.className='excluded';const motivo=r.status==='ERRO'?`<b class="err">${escapeHtml(r.erro||'Falha na consulta')}</b><br><span class="small">Tentativas: ${r.tentativas||1}${r.ultima_tentativa?' · Última: '+escapeHtml(r.ultima_tentativa):''}</span>`:escapeHtml(changes);const compararDisabled=semBase||r.status!=='OK'?'disabled':'';tr.innerHTML=`<td><input type="checkbox" ${r.incluir!==false&&r.status==='OK'&&situacaoAtiva(r.situacao)?'checked':''} ${r.status!=='OK'||(!situacaoAtiva(r.situacao)&&!$('incluirNaoAtivos').checked)?'disabled':''} onchange="toggleIncluir(${i},this.checked)"></td><td>${origemBadge(r.origem)}</td><td>${statusBadge(s)}</td><td class="mono nowrap">${escapeHtml(r.cnpj)}</td><td>${escapeHtml(r.razao_social||'—')}</td><td>${r.status==='OK'?apiBadge(r.api_provider):'—'}</td><td>${r.status==='OK'?(situacaoAtiva(r.situacao)?`<span class="badge badge-ok">${escapeHtml(r.situacao||'ATIVA')}</span>`:`<span class="badge badge-erro">${escapeHtml(r.situacao||'N/I')}</span>`):'—'}</td><td class="diff-count ${count?'diff-many':'diff-zero'}">${r.origem==='EXISTENTE'?count:(r.origem==='NOVO'?'NOVO':'—')}</td><td>${motivo}</td><td><div class="row-actions"><button onclick="verComparacao(${i})" ${compararDisabled}>Comparar</button><button onclick="verSQL(${i})" ${r.status!=='OK'?'disabled':''}>SQL</button>${r.status==='ERRO'?`<button onclick="reprocessarUm(${i})">Tentar novamente</button>`:''}</div></td>`;t.appendChild(tr)})}
+function toggleIncluir(i,v){resultados[i].incluir=v;persistirEstado();atualizarTudo();renderTabela();regenerarSQL()}function selecionarTodos(v){resultados.forEach(r=>{if(r.status==='OK')r.incluir=v});recalcularTudo()}
+function setFieldRecord(i,key,v){resultados[i].fieldSelection[key]=v;persistirEstado();recalcularRegistro(resultados[i]);verComparacao(i);atualizarTudo();renderTabela();regenerarSQL()}
+function verComparacao(i){const r=resultados[i];$('detailTitle').textContent=`Redsis × Receita • ${r.cnpj}`;if(r.status!=='OK'){$('detailBody').innerHTML=`<div class="notice warning">${escapeHtml(r.erro)}</div>`;$('detailDialog').showModal();return}const rows=FIELD_DEFS.map(f=>{const d=diffField(r,f),enabled=fieldEnabledForRecord(r,f.key),state=d.state==='same'||d.state==='preserved'?'<span class="same">Igual</span>':d.state==='new'?'<span class="newval">Novo cadastro</span>':'<span class="changed">Alterado</span>';return `<tr><td><input type="checkbox" ${enabled?'checked':''} ${!globalFieldEnabled(f.key)?'disabled':''} onchange="setFieldRecord(${i},'${f.key}',this.checked)"></td><td><b>${f.label}</b></td><td>${escapeHtml(temValor(d.base)?d.base:'—')}</td><td>${escapeHtml(temValor(d.api)?d.api:'—')}</td><td>${state}</td></tr>`}).join('');const issues=r.issues?.length?`<div class="notice warning"><b>Alertas:</b> ${r.issues.map(x=>escapeHtml(x.texto)).join(' • ')}</div>`:'';$('detailBody').innerHTML=`${issues}<p class="small"><b>Fonte:</b> ${escapeHtml(r.api_nome||'N/I')}${r.api_fallback?' (fallback)':''}. A seleção abaixo vale apenas para este CNPJ. Campos desabilitados estão bloqueados pela seleção global.</p><div class="table-wrap" style="max-height:none"><table class="compare"><thead><tr><th>Atualizar</th><th>Campo</th><th>Redsis atual</th><th>Receita/API</th><th>Resultado</th></tr></thead><tbody>${rows}</tbody></table></div>`;$('detailDialog').showModal()}
+function sqlMunNome(id){return id?`(SELECT UPPER(NOM_MUN) FROM MUN WHERE CODIBGE_MUN = '${limparTexto(id)}')`:'NULL'}function sqlMunCod(id){return id?`(SELECT COD_MUN FROM MUN WHERE CODIBGE_MUN = '${limparTexto(id)}')`:'NULL'}function cnpjWhere(cnpj){return `REPLACE(REPLACE(REPLACE(CNPJCPF_PESS, '.', ''), '/', ''), '-', '') = '${cnpj}'`}
+function sqlValueForField(r,f){const v=fieldApiValue(r,f);if(f.key==='cidade')return sqlMunNome(r.ibge_id);if(f.key==='numero')return sqlNumero(v);if(f.key==='situacao_db')return sqlTexto(situacaoDb(r));return sqlTexto(v)}
+function updateAssignments(r){const out=[];for(const f of FIELD_DEFS){if(!fieldEnabledForRecord(r,f.key))continue;const d=diffField(r,f);if(r.base&&d.same)continue;if($('preservarVazios').checked&&!temValor(fieldApiValue(r,f)))continue;if(f.key==='cidade'){out.push(`MUN_PESS = ${sqlMunNome(r.ibge_id)}`);out.push(`COD_MUN = ${sqlMunCod(r.ibge_id)}`);continue}out.push(`${f.db} = ${sqlValueForField(r,f)}`);if(f.key==='ie')out.push(`CONTBICMS_PESS = '${contbicmsValor(r.ie)}'`)}for(const c of camposTipoCadastro()){if(!r.base||normalText(baseVal(r.base,c))!=='S')out.push(`${c} = 'S'`)}return out}
+function camposTipoCadastro(){const t=$('tipoCadastro').value;return t==='CLIENTE'?['CLIENT_PESS']:t==='FORNECEDOR'?['FORN_PESS']:['CLIENT_PESS','FORN_PESS']}
+function montarUpdateSQL(r){const a=updateAssignments(r);if(!a.length)return`-- ${r.cnpj}: sem alteração selecionada.`;return `UPDATE PESSOAS\nSET\n  ${a.join(',\n  ')}\nWHERE ${cnpjWhere(r.cnpj)};`}
+function insertData(r,codExpr){const campos=['COD_PESS','CNPJCPF_PESS','NOM_PESS','FANT_PESS','IE_PESS','CONTBICMS_PESS','END_PESS','NUM_PESS','COMPL_PESS','BAIRRO_PESS','MUN_PESS','COD_MUN','UF_PESS','CEP_PESS','FONE_PESS','FONE2_PESS','EMAIL_PESS','SIT_PESS','TIPO_PESS','CNAEP_PESS','COD_PAIS','NOM_PAIS',...camposTipoCadastro()];const valores=[codExpr,sqlTexto(r.cnpj),sqlTexto(r.razao_social),sqlTexto(r.nome_fantasia),sqlTexto(r.ie||'ISENTO'),`'${contbicmsValor(r.ie)}'`,sqlTexto(r.logradouro),sqlNumero(r.numero),sqlTexto(r.complemento),sqlTexto(r.bairro),sqlMunNome(r.ibge_id),sqlMunCod(r.ibge_id),sqlTexto(r.estado),sqlTexto(r.cep),sqlTexto(r.telefone1),sqlTexto(r.telefone2),sqlTexto(r.email),sqlTexto(situacaoDb(r)),sqlTexto(r.tipo),sqlTexto(r.cnae),'1058',"'BRASIL'",...camposTipoCadastro().map(()=>"'S'")];return{campos,valores}}
+function montarInsertSQL(r,codExpr){const x=insertData(r,codExpr);return `INSERT INTO PESSOAS (\n    ${x.campos.join(',\n    ')}\n  ) VALUES (\n    ${x.valores.join(',\n    ')}\n  );`}
+function montarUpsertSQL(r,codExpr){const x=insertData(r,codExpr);return `UPDATE OR INSERT INTO PESSOAS (\n  ${x.campos.join(',\n  ')}\n) VALUES (\n  ${x.valores.join(',\n  ')}\n) MATCHING (CNPJCPF_PESS);`}
+function gerarExecuteBlockNovos(novos){if(!novos.length)return'';if($('codStrategy').value==='MANUAL'){const inicio=Number($('codInicio').value);if(!Number.isInteger(inicio)||inicio<1)return'-- INFORME UM COD_PESS INICIAL VÁLIDO PARA OS NOVOS REGISTROS.';return novos.map((r,i)=>montarInsertSQL(r,String(inicio+i))).join('\n\n')}const bodies=novos.map(r=>`  IF (NOT EXISTS(SELECT 1 FROM PESSOAS WHERE ${cnpjWhere(r.cnpj)})) THEN\n  BEGIN\n    ${montarInsertSQL(r,':V_COD').replace(/\n/g,'\n    ')}\n    V_COD = V_COD + 1;\n  END`).join('\n\n');return `SET TERM ^ ;\nEXECUTE BLOCK AS\n  DECLARE VARIABLE V_COD INTEGER;\nBEGIN\n  SELECT COALESCE(MAX(COD_PESS), 0) + 1 FROM PESSOAS INTO :V_COD;\n\n${bodies}\nEND^\nSET TERM ; ^`}
+function gerarSqlCompleto(){const eleg=resultados.filter(podeGerar),modo=$('tipoSql').value;if(!eleg.length)return'';const header=`-- Saneamento de Pessoas Redsis v4.3\n-- Gerado em: ${new Date().toLocaleString('pt-BR')}\n-- Revise e faça backup antes de executar.\n\n`;if(modo==='UPDATE')return header+eleg.filter(r=>r.origem!=='NOVO').map(montarUpdateSQL).join('\n\n');if(modo==='UPSERT'){const inicio=Number($('codInicio').value)||1;return header+eleg.map((r,i)=>montarUpsertSQL(r,String(inicio+i))).join('\n\n')}const existentes=eleg.filter(r=>r.origem!=='NOVO'),novos=eleg.filter(r=>r.origem==='NOVO');let parts=[];if(existentes.length)parts.push('-- ATUALIZAÇÕES DE CADASTROS EXISTENTES\n'+existentes.map(montarUpdateSQL).join('\n\n'));if(novos.length)parts.push('-- INSERÇÕES DE NOVOS CADASTROS\n'+gerarExecuteBlockNovos(novos));return header+parts.join('\n\n')}
+function regenerarSQL(){const sql=gerarSqlCompleto();$('sqlOutput').value=sql;const e=resultados.filter(podeGerar),n=e.filter(r=>r.origem==='NOVO').length,ex=e.length-n;$('sqlResumo').textContent=e.length?`${e.length} registro(s) elegível(is): ${ex} atualização(ões) e ${n} novo(s). SQL de existentes contém somente campos selecionados e divergentes.`:'Nenhum registro elegível para geração.'}
+function configMudou(){$('codManualGroup').style.display=$('codStrategy').value==='MANUAL'?'grid':'none';recalcularTudo()}
+function verSQL(i){const r=resultados[i];let sql;if(r.origem==='NOVO'){sql=$('codStrategy').value==='MANUAL'?montarInsertSQL(r,String(Number($('codInicio').value)||0)):gerarExecuteBlockNovos([r])}else sql=montarUpdateSQL(r);$('detailTitle').textContent=`SQL • ${r.cnpj}`;$('detailBody').innerHTML=`<textarea class="sql-area" readonly>${escapeHtml(sql)}</textarea>`;$('detailDialog').showModal()}
+function baixarArquivo(nome,conteudo,tipo){const blob=new Blob([conteudo],{type:tipo+';charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=nome;a.click();setTimeout(()=>URL.revokeObjectURL(url),500)}function baixarSQL(){const c=$('sqlOutput').value.trim();if(!c){alert('Não há SQL elegível.');return}baixarArquivo('saneamento_pessoas_redsis_v4_3.sql',c,'text/sql')}
+function baixarCSV(){const h=['origem','status','cnpj','api','api_fallback','cod_pess_redsis','razao_redsis','razao_receita','situacao_receita','divergencias','campos_divergentes','incluir_sql','alertas'];const rows=resultados.map(r=>{const o={origem:r.origem,status:statusRegistro(r),cnpj:r.cnpj,api:r.api_nome||'',api_fallback:r.api_fallback?'SIM':'NAO',cod_pess_redsis:baseVal(r.base,'COD_PESS'),razao_redsis:baseVal(r.base,'NOM_PESS'),razao_receita:r.razao_social,situacao_receita:r.situacao,divergencias:r.changed?.length||0,campos_divergentes:(r.changed||[]).map(x=>x.f.label).join(' | '),incluir_sql:podeGerar(r)?'SIM':'NAO',alertas:(r.issues||[]).map(x=>x.texto).join(' | ')};return h.map(k=>`"${String(o[k]??'').replace(/"/g,'""')}"`).join(';')});baixarArquivo('relatorio_comparacao_redsis_receita.csv',[h.join(';'),...rows].join('\n'),'text/csv')}
+function mostrarSqlExportacao(){$('detailTitle').textContent='SELECT sugerido para exportar a PESSOAS';const q=`SELECT\n  COD_PESS, CNPJCPF_PESS, NOM_PESS, FANT_PESS, IE_PESS,\n  END_PESS, NUM_PESS, COMPL_PESS, BAIRRO_PESS, MUN_PESS, COD_MUN,\n  UF_PESS, CEP_PESS, FONE_PESS, FONE2_PESS, EMAIL_PESS,\n  SIT_PESS, TIPO_PESS, CNAEP_PESS, CLIENT_PESS, FORN_PESS\nFROM PESSOAS\nWHERE CNPJCPF_PESS IS NOT NULL;`;$('detailBody').innerHTML=`<p class="small">Execute no IBExpert/Firebird e exporte o resultado com cabeçalho em CSV ou TXT.</p><div class="sql-example">${escapeHtml(q)}</div>`;$('detailDialog').showModal()}
+function limparTudo(){if(!confirm('Deseja limpar CNPJs, base e resultados?'))return;try{localStorage.removeItem(STORAGE_KEY)}catch(e){}lista=[];invalidos=[];resultados=[];baseMap=new Map();baseLinhas=[];indiceAtual=0;rodando=false;$('cnpjInput').value='';$('baseInput').value='';$('fileInput').value='';$('baseFile').value='';$('sqlOutput').value='';renderImportSummary();renderBaseSummary();atualizarTudo();renderTabela();regenerarSQL()}
+initFields();renderImportSummary();renderBaseSummary();atualizarTudo();configMudou();restaurarEstado();
 </script>
-
 </body>
 </html>
