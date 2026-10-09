@@ -13,3 +13,16 @@ erros.txt
 # Temporários
 *.tmp
 *.bak
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+__pycache__/
+progresso.json
+
+BASE_PESSOAS.csv
+
+# Arquivos temporarios dos testes
+tests/_*

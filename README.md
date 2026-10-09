@@ -128,9 +128,48 @@ Por padrão, CNPJ que não estiver ativo fica fora do SQL. É possível liberar 
 
 `SIT_PESS` também pode ser autorizado na seleção de campos. O perfil seguro não o marca por padrão.
 
-## Utilitário Python
+## Aplicativos Python
 
-`CNPJ.py` continua disponível para lotes simples de UPDATE sem interface. Ele usa as regras de validação e saneamento, porém a comparação Redsis × Receita e a seleção visual de campos são recursos da interface `index.html`.
+Mesmas regras do `index.html`, em dois programas que dispensam navegador. O motor fica em `cnpj_core.py` e é compartilhado pelos dois.
+
+- `gui.py` — janela com as etapas Entrada, Regras, Resultados e SQL. Empacotado como `ConsultaCNPJ.exe`.
+- `CNPJ.py` — linha de comando. Sem argumentos pergunta cada opção; com argumentos roda direto. Empacotado como `ConsultaCNPJ-CLI.exe`.
+
+Ambos leem `CNPJ.txt` e `BASE_PESSOAS.csv` da própria pasta, e gravam `updates.sql` e `relatorio_cnpj.csv` ali mesmo. O progresso é salvo em `progresso.json` a cada consulta e pode ser retomado.
+
+```bash
+ConsultaCNPJ-CLI.exe --base BASE_PESSOAS.csv --modo SMART --delay 3 --workers 4
+```
+
+Principais opções: `--modo SMART|UPDATE|UPSERT`, `--tipo cliente|fornecedor|ambos`, `--api`, `--delay`, `--workers`, `--campos` (veja `--listar-campos`), `--incluir-inativos`, `--forcar-ativo`, `--situacao-receita`, `--cod-inicio`, `--recomecar`.
+
+Sem o CSV da base não há comparação: todo CNPJ é tratado como existente, nenhum INSERT é gerado e todos os campos marcados são gravados.
+
+### Ritmo das consultas
+
+O intervalo é controlado **por API**, não globalmente: uma chamada de fallback à BrasilAPI não consome o intervalo do CNPJ.ws. Um HTTP 429 eleva o intervalo daquela API — respeitando `Retry-After` em segundos ou em data, ou aplicando recuo exponencial de até 120 s quando o cabeçalho não vem — e cada sucesso reduz esse acréscimo pela metade. Parar interrompe na hora, mesmo durante uma espera longa.
+
+### Testes
+
+```bash
+python tests/run.py
+```
+
+Quatro suítes: motor (lista, progresso, retomada, geração), camada de rede contra um servidor HTTP local, paridade com o `index.html` e interface gráfica. A paridade executa o JavaScript do próprio `index.html` no Node e exige que a saída do Python seja idêntica — se a interface mudar e o Python não acompanhar, o teste acusa. Sem o Node instalado essa suíte é pulada; as outras três não dependem de rede.
+
+### Gerar os executáveis
+
+```bash
+python build.py
+```
+
+Roda a bateria de testes e só empacota se tudo passar. Use `--sem-teste` para pular. O ícone é gerado por `icone.py` (precisa do Pillow).
+
+Os executáveis não são assinados, então o SmartScreen avisa na primeira execução. Com um certificado de code signing:
+
+```bash
+signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /f certificado.pfx /p SENHA dist\*.exe
+```
 
 ## Segurança operacional
 

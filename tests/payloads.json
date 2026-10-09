@@ -1,0 +1,14 @@
+{
+  "cnpjws": [
+    {"razao_social":"EMPRESA TESTE LTDA","estabelecimento":{"nome_fantasia":"TESTE","situacao_cadastral":"Ativa","logradouro":"RUA  A   B","numero":"10-A","complemento":"SALA 2","bairro":"CENTRO","cep":"01.001-000","ddd1":"11","telefone1":"33334444","ddd2":"11","telefone2":"0000000000","email":"X@Y.COM.BR","tipo":"Matriz","cidade":{"nome":"São Paulo","ibge_id":3550308},"estado":{"sigla":"SP"},"atividade_principal":{"id":"4712100"},"inscricoes_estaduais":[{"inscricao_estadual":"12345","ativo":true,"estado":{"sigla":"SP"}}]}},
+    {"razao_social":"SEM IE SA","estabelecimento":{"nome_fantasia":null,"situacao_cadastral":"Baixada","logradouro":"AV B","numero":"","complemento":null,"bairro":"VILA","cep":"00000000","ddd1":"","telefone1":"","ddd2":null,"telefone2":null,"email":"invalido-sem-arroba","tipo":"Filial","cidade":{"nome":"Santos","ibge_id":3548500},"estado":{"sigla":"SP"},"atividade_principal":{"codigo":"4711301"},"inscricoes_estaduais":[]}},
+    {"razao_social":"IE OUTRA UF","estabelecimento":{"nome_fantasia":"X","situacao_cadastral":"Ativa","logradouro":"R C","numero":"1","bairro":"B","cep":"20031912","ddd1":"21","telefone1":"22223333","email":"a@b.co","tipo":"Matriz","cidade":{"nome":"Rio","ibge_id":3304557},"estado":{"sigla":"RJ"},"atividade_principal":{"id":"6422100"},"inscricoes_estaduais":[{"inscricao_estadual":"999","ativo":false,"estado":{"sigla":"MG"}},{"inscricao_estadual":"77777777","situacao":"ATIVA","estado":{"sigla":"RJ"}}]}}
+  ],
+  "brasilapi": [
+    {"razao_social":"BRASIL API LTDA","nome_fantasia":"BAPI","descricao_situacao_cadastral":"ATIVA","logradouro":"RUA X","numero":"5","complemento":"","bairro":"CENTRO","municipio":"CURITIBA","uf":"PR","cep":"80010000","ddd_telefone_1":"4133334444","ddd_telefone_2":"","email":"c@d.com","descricao_identificador_matriz_filial":"MATRIZ","codigo_municipio_ibge":4106902,"cnae_fiscal":4712100},
+    {"nome":"FALLBACK NOME","fantasia":"FANT","situacao_cadastral":"BAIXADA","logradouro":"AV Y","numero":"","bairro":"B","municipio":"RECIFE","uf":"PE","cep":"5001-000","telefone":"8133334444","email":"","tipo":"FILIAL","codigo_municipio":"2611606","cnae_fiscal":"4711-3/01"}
+  ],
+  "minhareceita": [
+    {"razao_social":"MINHA RECEITA SA","nome_fantasia":"MR","descricao_situacao_cadastral":"ATIVA","logradouro":"RUA Z","numero":"9","complemento":"AP 1","bairro":"CENTRO","municipio":"BELO HORIZONTE","uf":"MG","cep":"30110000","ddd_telefone_1":"3133334444","ddd_telefone_2":"3144445555","email":"e@f.com","descricao_identificador_matriz_filial":"MATRIZ","codigo_municipio_ibge":3106200,"cnae_fiscal":6422100}
+  ]
+}
