@@ -1,3 +1,10 @@
+## v4.4 - 14/10/2026
+
+- A base da PESSOAS pode vir direto do Firebird, alem do CSV/TXT: modulo `firebird_db.py`, botao na interface grafica e ponte local `ponte.py` para o `index.html`.
+- Campo *Biblioteca cliente*: o `fbclient.dll` e procurado sozinho nas pastas padrao e no PATH, com a arquitetura conferida antes de carregar e as versoes incompativeis descartadas.
+- Os INSERTs dos novos cadastros passam a sair **sem** `SET TERM`, que nao e SQL e fazia FireDAC, JDBC e o SQL Editor do IBExpert responderem `Token unknown - line 1, column 5 TERM`. A opcao *Incluir SET TERM nos INSERTs* (`--set-term`) liga de volta para o isql e o Script Executive.
+- Nova bateria `tests/test_sql_firebird.py`, que executa o SQL gerado em um Firebird embarcado de verdade.
+
 ## v4.2.1 - 28/09/2026
 
 - Corrige erro JavaScript `temValor is not defined` durante a leitura da resposta da API.

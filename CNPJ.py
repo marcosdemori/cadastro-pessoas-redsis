@@ -121,6 +121,7 @@ def montar_parser():
     p.add_argument("--forcar-ativo", action="store_true", help="grava SIT_PESS = 'ATIVO' em todos")
     p.add_argument("--situacao-receita", action="store_true", help="grava SIT_PESS mapeada da Receita (ATIVO/INATIVO)")
     p.add_argument("--cod-inicio", type=int, default=None, metavar="N", help="COD_PESS inicial manual para os novos cadastros")
+    p.add_argument("--set-term", action="store_true", help="incluir SET TERM nos INSERTs (isql e Script Executive do IBExpert; FireDAC quebra com ele)")
     p.add_argument("--recomecar", action="store_true", help="ignora o progresso salvo e consulta tudo de novo")
     p.add_argument("--sql", default=None, metavar="ARQ", help="caminho do SQL gerado")
     p.add_argument("--csv", default=None, metavar="ARQ", help="caminho do relatório gerado")
@@ -164,6 +165,7 @@ def config_de_args(args):
         tentativas=args.tentativas,
         cod_strategy="MANUAL" if args.cod_inicio else "AUTO",
         cod_inicio=args.cod_inicio or 1,
+        set_term=args.set_term,
     ).normalizar()
 
 

@@ -18,6 +18,7 @@ SUITES = [
     ("paridade com index.html", "test_paridade.py"),
     ("interface gráfica", "test_gui.py"),
     ("Firebird e ponte local", "test_firebird.py"),
+    ("SQL em Firebird real", "test_sql_firebird.py"),
 ]
 
 

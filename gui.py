@@ -162,6 +162,14 @@ class App:
         ttk.Checkbutton(l3, text="Preservar dados existentes quando a API vier vazia", variable=self.var_preservar, command=self.recalcular).pack(anchor="w")
         ttk.Checkbutton(l3, text="Permitir SQL para CNPJ não ativo (BAIXADO, INAPTO, SUSPENSO)", variable=self.var_inativos, command=self.recalcular).pack(anchor="w")
         ttk.Checkbutton(l3, text="Forçar SIT_PESS = 'ATIVO' (sem isso a situação vem mapeada da Receita)", variable=self.var_forcar, command=self.recalcular).pack(anchor="w")
+        self.var_set_term = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            l3,
+            text="Incluir SET TERM nos INSERTs (só para isql e Script Executive do IBExpert; "
+                 "FireDAC e o SQL Editor quebram com ele)",
+            variable=self.var_set_term,
+            command=self.recalcular,
+        ).pack(anchor="w")
 
         campos = ttk.Labelframe(pai, text="Campos que podem ser gravados", padding=8)
         campos.pack(fill="both", expand=True, pady=(10, 0))
@@ -352,6 +360,7 @@ class App:
         self.var_forcar.set(cfg.situacao_sempre_ativo)
         self.var_cod_auto.set(cfg.cod_strategy == "AUTO")
         self.var_cod_inicio.set(str(cfg.cod_inicio))
+        self.var_set_term.set(bool(cfg.set_term))
         for key, var in self.vars_campos.items():
             var.set(key in cfg.campos)
         self._atualizar_cod()
@@ -377,6 +386,7 @@ class App:
             tentativas=int(numero(self.var_tentativas, 2)),
             cod_strategy="MANUAL" if manual else "AUTO",
             cod_inicio=int(numero(self.var_cod_inicio, 1)),
+            set_term=self.var_set_term.get(),
         ).normalizar()
 
     # -------------------------------------------------------------- entrada

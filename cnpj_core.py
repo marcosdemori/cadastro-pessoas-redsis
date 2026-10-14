@@ -362,6 +362,10 @@ class Config:
     tentativas: int = 2
     cod_strategy: str = "AUTO"
     cod_inicio: int = 1
+    # SET TERM e comando de cliente, nao SQL: so o isql e o Script Executive do
+    # IBExpert precisam dele. FireDAC, JDBC, ADO e o SQL Editor do IBExpert
+    # mandam um statement por vez e quebram com ele. Por isso sai desligado.
+    set_term: bool = False
 
     def normalizar(self):
         self.tipo_sql = str(self.tipo_sql or "SMART").upper()
@@ -378,6 +382,7 @@ class Config:
         self.workers = max(1, min(8, int(self.workers)))
         self.tentativas = max(1, min(5, int(self.tentativas)))
         self.cod_inicio = max(1, int(self.cod_inicio or 1))
+        self.set_term = bool(self.set_term)
         return self
 
 
@@ -969,12 +974,18 @@ def gerar_execute_block_novos(novos, cfg):
             f"  IF (NOT EXISTS(SELECT 1 FROM PESSOAS WHERE {cnpj_where(r.cnpj)})) THEN\n"
             f"  BEGIN\n    {insert}\n    V_COD = V_COD + 1;\n  END"
         )
-    return (
-        "SET TERM ^ ;\nEXECUTE BLOCK AS\n  DECLARE VARIABLE V_COD INTEGER;\nBEGIN\n"
+    bloco = (
+        "EXECUTE BLOCK AS\n  DECLARE VARIABLE V_COD INTEGER;\nBEGIN\n"
         "  SELECT COALESCE(MAX(COD_PESS), 0) + 1 FROM PESSOAS INTO :V_COD;\n\n"
         + "\n\n".join(corpos)
-        + "\nEND^\nSET TERM ; ^"
+        + "\nEND"
     )
+    if not cfg.set_term:
+        # SET TERM e comando do cliente (isql, IBExpert), nao SQL. Ferramentas
+        # que mandam um statement por vez - FireDAC, JDBC, ADO - respondem
+        # "Token unknown - line 1, column 5 TERM" ao ver essa linha.
+        return bloco
+    return "SET TERM ^ ;\n" + bloco + "^\nSET TERM ; ^"
 
 
 def gerar_sql_completo(resultados, base_map, cfg):

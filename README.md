@@ -166,6 +166,23 @@ Antes de cada INSERT há uma verificação de existência pelo CNPJ.
 - **Somente UPDATE**: ignora registros classificados como novos.
 - **UPDATE OR INSERT**: mantido para compatibilidade; prefira o modo inteligente quando houver base importada.
 
+### `SET TERM` nos INSERTs
+
+Os novos cadastros saem em um `EXECUTE BLOCK`, que calcula `MAX(COD_PESS)+1` na hora de executar. Por padrao o bloco sai **sem** `SET TERM`.
+
+`SET TERM` nao e SQL: e comando do programa cliente. Quem manda um comando por vez — FireDAC (o app Delphi), JDBC, ADO, o driver Python, o SQL Editor do IBExpert — recebe o `SET TERM` como se fosse SQL e devolve:
+
+```
+Dynamic SQL Error
+SQL error code = -104
+Token unknown - line 1, column 5
+TERM
+```
+
+Marque *Incluir SET TERM nos INSERTs* (`--set-term` na linha de comando) so para o **isql** e o **Script Executive** do IBExpert, que leem o arquivo como script e precisam saber onde um comando termina.
+
+Nos dois casos o bloco em si e o mesmo, e `tests/test_sql_firebird.py` executa os dois contra um Firebird embarcado de verdade: sem `SET TERM` o banco aceita, com `SET TERM` ele recusa com o erro acima.
+
 ## Situação cadastral
 
 Por padrão, CNPJ que não estiver ativo fica fora do SQL. É possível liberar manualmente quando necessário.
