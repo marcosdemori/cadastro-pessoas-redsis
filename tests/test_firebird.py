@@ -165,6 +165,48 @@ def main():
             ok = True
         checar("avisa quando a coluna do CNPJ nao existe", ok)
 
+        # --- biblioteca cliente: arquitetura conferida antes de carregar
+        def pe(bits):
+            maquina = {32: 0x014C, 64: 0x8664}[bits]
+            cab = bytearray(0x50)
+            cab[0:2] = b"MZ"
+            cab[0x3C:0x40] = (0x40).to_bytes(4, "little")
+            cab[0x40:0x44] = b"PE\x00\x00"
+            cab[0x44:0x46] = maquina.to_bytes(2, "little")
+            return bytes(cab)
+
+        meus = fb.bits_do_python()
+        outros = 32 if meus == 64 else 64
+        certa = os.path.join(pasta, "fbclient.dll")
+        errada = os.path.join(pasta, "errada", "fbclient.dll")
+        os.makedirs(os.path.dirname(errada), exist_ok=True)
+        open(certa, "wb").write(pe(meus))
+        open(errada, "wb").write(pe(outros))
+
+        checar("le a arquitetura do cabecalho PE",
+               fb.bits_da_dll(certa) == meus and fb.bits_da_dll(errada) == outros,
+               f"{fb.bits_da_dll(certa)} / {fb.bits_da_dll(errada)}")
+        checar("arquivo que nao e DLL nao quebra a leitura",
+               fb.bits_da_dll(os.path.join(pasta, "nao-existe.dll")) is None)
+
+        try:
+            fb._carregar_biblioteca(errada)
+            ok, msg = False, "carregou a DLL de arquitetura errada"
+        except fb.ErroFirebird as exc:
+            msg = str(exc)
+            ok = f"{outros} bits" in msg and f"{meus} bits" in msg
+        checar("recusa fbclient.dll da arquitetura errada antes de carregar", ok, msg)
+
+        try:
+            fb._carregar_biblioteca(os.path.join(pasta, "nao-existe.dll"))
+            ok = False
+        except fb.ErroFirebird:
+            ok = True
+        checar("avisa quando a biblioteca informada nao existe", ok)
+
+        checar("a lista de clientes descarta a arquitetura errada",
+               all(fb.bits_da_dll(c) in (None, meus) for c in fb.localizar_clientes()))
+
         # --- config: a senha so e gravada quando o usuario pede
         alvo = fb.salvar_conexao(fb.Conexao(banco="x.fdb", senha="segredo"))
         gravado = json.load(open(alvo, encoding="utf-8"))

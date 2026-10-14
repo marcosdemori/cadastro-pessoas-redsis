@@ -65,7 +65,20 @@ Instale um dos drivers Python de Firebird:
 pip install firebird-driver
 ```
 
-`firebird-driver` atende Firebird 3, 4 e 5; para Firebird 2.5 use `pip install fdb`. Os dois exigem o `fbclient.dll` da **mesma arquitetura do Python** (32 ou 64 bits) no PATH ou ao lado do aplicativo.
+`firebird-driver` atende Firebird 3, 4 e 5; para Firebird 2.5 use `pip install fdb`.
+
+#### A biblioteca cliente (`fbclient.dll`)
+
+Os dois drivers precisam do `fbclient.dll`, e ele tem que ser da **mesma arquitetura do Python** — um Python de 64 bits nao carrega DLL de 32 bits, e o erro que aparece (`WinError 193`) nao explica isso.
+
+O campo *Biblioteca cliente* resolve. Deixando vazio, o aplicativo procura sozinho: ao lado do executavel, nas pastas padrao do Firebird (5.0, 4.0, 3.0, 2.5, inclusive as de 32 bits) e no PATH, descartando as de arquitetura incompativel e ficando com a mais nova. Preenchido, usa aquele caminho.
+
+Duas armadilhas comuns:
+
+- um `fbclient.dll` de 32 bits largado na pasta do projeto, vindo de instalacao antiga, e ignorado se o Python for de 64 bits — antes a mensagem era so `The location of Firebird Client Library could not be determined.`;
+- o driver carrega a biblioteca **uma vez por processo**. Trocar de caminho depois disso exige fechar e abrir o aplicativo, e a mensagem diz isso.
+
+Com varios servidores Firebird na mesma maquina, confira a porta: cada instancia tem a sua em `RemoteServicePort`, no `firebird.conf` da instalacao.
 
 **No aplicativo Python (`gui.py`)**: botão *Ler do banco (Firebird)...* na seção "Base atual da PESSOAS". Informe host, porta, caminho do `.fdb`, usuário, senha e charset, use *Testar conexão* e depois *Carregar base*.
 

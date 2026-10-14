@@ -480,15 +480,31 @@ class App:
         campo("Coluna do CNPJ:", "coluna_cnpj", cfg.coluna_cnpj, largura=20, linha=8)
         campo("Limite de linhas (0 = tudo):", "limite", cfg.limite, largura=10, linha=9)
 
+        achadas = fb.localizar_clientes()
+        ttk.Label(corpo, text="Biblioteca cliente:").grid(row=10, column=0, sticky="e", padx=(0, 6), pady=3)
+        var_lib = tk.StringVar(value=cfg.biblioteca)
+        cb_lib = ttk.Combobox(corpo, textvariable=var_lib, values=achadas, width=58)
+        cb_lib.grid(row=10, column=1, sticky="w", pady=3)
+        ttk.Button(corpo, text="Procurar...",
+                   command=lambda: self._escolher_dll(var_lib)).grid(row=10, column=2, sticky="w", padx=6)
+        ttk.Label(
+            corpo,
+            text=(f"Vazio = usa a primeira da lista. {len(achadas)} fbclient.dll de "
+                  f"{fb.bits_do_python()} bits encontrado(s)." if achadas else
+                  f"Nenhum fbclient.dll de {fb.bits_do_python()} bits encontrado: informe o caminho."),
+            foreground="#555" if achadas else "#b36b00",
+            wraplength=520,
+        ).grid(row=11, column=0, columnspan=3, sticky="w")
+
         var_salvar = tk.BooleanVar(value=cfg.salvar_senha)
         ttk.Checkbutton(
             corpo,
             text="Gravar a senha em conexao_firebird.json (texto puro, sem criptografia)",
             variable=var_salvar,
-        ).grid(row=10, column=0, columnspan=3, sticky="w", pady=(8, 0))
+        ).grid(row=12, column=0, columnspan=3, sticky="w", pady=(8, 0))
 
-        lbl_status = ttk.Label(corpo, text="", wraplength=520, foreground="#555")
-        lbl_status.grid(row=11, column=0, columnspan=3, sticky="w", pady=(10, 0))
+        lbl_status = ttk.Label(corpo, text="", wraplength=520, foreground="#555", justify="left")
+        lbl_status.grid(row=13, column=0, columnspan=3, sticky="w", pady=(10, 0))
 
         def montar_cfg():
             atual = fb.Conexao(
@@ -502,6 +518,7 @@ class App:
                 coluna_cnpj=campos["coluna_cnpj"].get(),
                 limite=campos["limite"].get(),
                 salvar_senha=var_salvar.get(),
+                biblioteca=var_lib.get(),
             )
             return atual.normalizar()
 
@@ -517,6 +534,8 @@ class App:
             faltando = info["colunas_faltando"]
             texto = (f"Conexão OK via {info['driver']}. Tabela {info['tabela']} com "
                      f"{info['colunas_total']} coluna(s); {len(info['colunas_usadas'])} serão lidas.")
+            if info.get("biblioteca"):
+                texto += "\nBiblioteca: " + info["biblioteca"]
             if faltando:
                 texto += " Ausentes (serão ignoradas): " + ", ".join(faltando)
             lbl_status.configure(text=texto, foreground="#0a7d25")
@@ -550,12 +569,20 @@ class App:
             janela.destroy()
 
         botoes = ttk.Frame(corpo)
-        botoes.grid(row=12, column=0, columnspan=3, sticky="e", pady=(12, 0))
+        botoes.grid(row=14, column=0, columnspan=3, sticky="e", pady=(12, 0))
         ttk.Button(botoes, text="Testar conexão", command=testar).pack(side="left", padx=4)
         ttk.Button(botoes, text="Carregar base", command=carregar).pack(side="left", padx=4)
         ttk.Button(botoes, text="Fechar", command=janela.destroy).pack(side="left", padx=4)
 
         entrada_banco.focus_set()
+
+    def _escolher_dll(self, var):
+        arquivo = filedialog.askopenfilename(
+            title="Selecione o fbclient.dll",
+            filetypes=[("Biblioteca cliente", "fbclient.dll"), ("DLL", "*.dll"), ("Todos os arquivos", "*.*")],
+        )
+        if arquivo:
+            var.set(arquivo)
 
     def _escolher_fdb(self, var):
         arquivo = filedialog.askopenfilename(

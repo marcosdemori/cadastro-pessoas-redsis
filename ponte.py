@@ -132,6 +132,8 @@ class Handler(BaseHTTPRequestHandler):
                 "conexao": {k: v for k, v in vars(salvo).items() if k != "senha"},
                 "colunas": fb.COLUNAS_PESSOAS,
                 "charsets": fb.CHARSETS,
+                "bibliotecas": fb.localizar_clientes(),
+                "bits": fb.bits_do_python(),
             })
             return
         self._erro(404, "Rota desconhecida.")

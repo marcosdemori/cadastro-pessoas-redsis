@@ -16,6 +16,7 @@ disponivel no PATH ou ao lado do executavel.
 import json
 import os
 import re
+import sys
 from dataclasses import dataclass, asdict, field
 
 import cnpj_core as core
@@ -70,10 +71,12 @@ class Conexao:
     coluna_cnpj: str = "CNPJCPF_PESS"
     limite: int = 0          # 0 = sem limite
     salvar_senha: bool = False
+    biblioteca: str = ""     # caminho do fbclient.dll; vazio = procurar sozinho
 
     def normalizar(self):
         self.host = (self.host or "localhost").strip()
         self.banco = (self.banco or "").strip()
+        self.biblioteca = (self.biblioteca or "").strip().strip('"')
         self.usuario = (self.usuario or "SYSDBA").strip()
         self.charset = (self.charset or "WIN1252").strip().upper()
         self.tabela = (self.tabela or "PESSOAS").strip().upper()
@@ -95,6 +98,160 @@ class Conexao:
     def descricao(self):
         local = self.banco or "(banco nao informado)"
         return f"{self.usuario}@{self.host}:{self.porta} - {os.path.basename(local) or local}"
+
+
+# ------------------------------------------- biblioteca cliente (fbclient.dll)
+
+# Pastas onde o instalador do Firebird e o IBExpert costumam deixar o cliente.
+# A ordem e da versao mais nova para a mais velha: um cliente novo fala com
+# servidor antigo com mais frequencia que o contrario.
+_PASTAS_CLIENTE = [
+    r"C:\Program Files\Firebird\Firebird_5_0",
+    r"C:\Program Files\Firebird\Firebird_4_0",
+    r"C:\Program Files\Firebird\Firebird_3_0",
+    r"C:\Program Files\Firebird\Firebird_2_5\bin",
+    r"C:\Program Files (x86)\Firebird\Firebird_3_0",
+    r"C:\Program Files (x86)\Firebird\Firebird_2_5\bin",
+]
+
+_biblioteca_carregada = None
+
+# Maquinas do cabecalho PE que interessam aqui.
+_PE_MAQUINA = {0x014C: 32, 0x8664: 64, 0xAA64: 64}
+
+
+def bits_do_python():
+    return 64 if sys.maxsize > 2 ** 32 else 32
+
+
+def bits_da_dll(caminho):
+    """Le o cabecalho PE e devolve 32, 64 ou None se nao der para saber.
+
+    Carregar uma DLL de arquitetura diferente da do Python falha com
+    'WinError 193: nao e um aplicativo Win32 valido'. Conferir antes evita
+    essa mensagem, que nao ajuda ninguem a entender o problema.
+    """
+    try:
+        with open(caminho, "rb") as f:
+            if f.read(2) != b"MZ":
+                return None
+            f.seek(0x3C)
+            inicio = int.from_bytes(f.read(4), "little")
+            f.seek(inicio)
+            if f.read(4) != b"PE\0\0":
+                return None
+            return _PE_MAQUINA.get(int.from_bytes(f.read(2), "little"))
+    except OSError:
+        return None
+
+
+def localizar_clientes(so_compativeis=True):
+    """Lista os fbclient.dll encontrados, do mais novo para o mais velho.
+
+    Procura ao lado do aplicativo, nas pastas padrao de instalacao e no PATH.
+    Por padrao descarta as DLLs de arquitetura diferente da do Python, que
+    nunca carregariam. Fora do Windows devolve lista vazia: ali o driver acha
+    a libfbclient sozinho pelo caminho do sistema.
+    """
+    if os.name != "nt":
+        return []
+
+    candidatos = [
+        os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "fbclient.dll"),
+        core.recurso("fbclient.dll"),
+    ]
+    candidatos += [os.path.join(p, "fbclient.dll") for p in _PASTAS_CLIENTE]
+    candidatos += [
+        os.path.join(p, "fbclient.dll")
+        for p in os.environ.get("PATH", "").split(os.pathsep) if p.strip()
+    ]
+
+    achados = []
+    vistos = set()
+    for c in candidatos:
+        try:
+            real = os.path.normcase(os.path.abspath(c))
+        except (OSError, ValueError):
+            continue
+        if real in vistos:
+            continue
+        vistos.add(real)
+        if not os.path.isfile(c):
+            continue
+        if so_compativeis and bits_da_dll(c) not in (None, bits_do_python()):
+            continue
+        achados.append(os.path.abspath(c))
+    return achados
+
+
+def _carregar_biblioteca(caminho):
+    """Aponta o driver para um fbclient.dll especifico.
+
+    O driver so carrega a biblioteca uma vez por processo. Trocar de caminho
+    depois disso exige reiniciar o aplicativo, e e isso que a mensagem diz.
+    """
+    global _biblioteca_carregada
+    if not caminho:
+        return
+    if not os.path.isfile(caminho):
+        raise ErroFirebird(f"Biblioteca cliente nao encontrada em: {caminho}")
+
+    bits = bits_da_dll(caminho)
+    meus = bits_do_python()
+    if bits and bits != meus:
+        outras = [c for c in localizar_clientes() if os.path.normcase(c) != os.path.normcase(caminho)]
+        extra = ("\nCompativeis encontradas:\n  " + "\n  ".join(outras[:6])) if outras else ""
+        raise ErroFirebird(
+            f"{caminho} e de {bits} bits e este Python e de {meus} bits; "
+            f"ela nunca vai carregar aqui.{extra}"
+        )
+
+    caminho = os.path.abspath(caminho)
+    if _biblioteca_carregada:
+        if os.path.normcase(_biblioteca_carregada) != os.path.normcase(caminho):
+            raise ErroFirebird(
+                f"A biblioteca {_biblioteca_carregada} ja foi carregada neste processo.\n"
+                f"Para usar {caminho}, feche e abra o aplicativo de novo."
+            )
+        return
+
+    nome = driver_disponivel()
+    try:
+        if nome == "firebird-driver":
+            import firebird.driver as fdriver
+            fdriver.load_api(caminho)
+        elif nome == "fdb":
+            import fdb
+            carregar = getattr(fdb, "load_api", None)
+            if carregar is None:
+                raise ErroFirebird(
+                    "Esta versao do fdb nao deixa escolher o fbclient.dll. "
+                    "Deixe o campo da biblioteca vazio e coloque o fbclient.dll no PATH, "
+                    "ou use o firebird-driver."
+                )
+            carregar(caminho)
+    except ErroFirebird:
+        raise
+    except Exception as exc:
+        raise ErroFirebird(f"Nao deu para carregar {caminho}: {_mensagem(exc)}") from exc
+
+    _biblioteca_carregada = caminho
+
+
+def _preparar_biblioteca(cfg):
+    """Garante uma biblioteca cliente antes de conectar.
+
+    Com o campo preenchido usa aquele caminho. Vazio, tenta o que ja estiver
+    carregado e, se nao houver, o primeiro fbclient.dll encontrado no sistema.
+    """
+    if cfg.biblioteca:
+        _carregar_biblioteca(cfg.biblioteca)
+        return
+    if _biblioteca_carregada:
+        return
+    achados = localizar_clientes()
+    if achados:
+        _carregar_biblioteca(achados[0])
 
 
 # ------------------------------------------------------------------- drivers
@@ -120,6 +277,8 @@ def _abrir(cfg):
     cfg.normalizar()
     if not cfg.banco:
         raise ErroFirebird("Informe o caminho (ou alias) do banco .fdb.")
+
+    _preparar_biblioteca(cfg)
 
     nome = driver_disponivel()
     if nome == "firebird-driver":
@@ -158,8 +317,14 @@ def _mensagem(exc):
     dica = ""
     baixo = texto.lower()
     if "fbclient" in baixo or "client library" in baixo or "shared library" in baixo:
-        dica = ("\nA biblioteca cliente nao foi encontrada. Copie o fbclient.dll "
-                "(mesma arquitetura do Python) para a pasta do aplicativo ou para o PATH.")
+        achados = localizar_clientes()
+        if achados:
+            dica = ("\nA biblioteca cliente nao foi carregada. Escolha uma destas no campo "
+                    "'Biblioteca cliente':\n  " + "\n  ".join(achados[:6]))
+        else:
+            dica = ("\nA biblioteca cliente nao foi encontrada. Copie o fbclient.dll "
+                    "(mesma arquitetura do Python: 32 ou 64 bits) para a pasta do aplicativo "
+                    "ou para o PATH, ou informe o caminho no campo 'Biblioteca cliente'.")
     elif "password" in baixo or "user name" in baixo:
         dica = "\nUsuario ou senha recusados pelo servidor."
     elif "unavailable" in baixo or "connection refused" in baixo or "network" in baixo:
@@ -221,6 +386,7 @@ def testar(cfg):
     faltando = [c for c in COLUNAS_PESSOAS if c not in colunas]
     return {
         "driver": driver_disponivel(),
+        "biblioteca": _biblioteca_carregada or "",
         "tabela": cfg.tabela,
         "colunas_total": len(colunas),
         "colunas_usadas": usadas,
