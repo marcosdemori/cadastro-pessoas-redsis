@@ -259,7 +259,10 @@ class App:
         acoes = ttk.Frame(pai)
         acoes.pack(fill="x", pady=(0, 6))
         ttk.Button(acoes, text="Atualizar prévia", command=self.atualizar_previa).pack(side="left")
-        ttk.Button(acoes, text="Salvar SQL e CSV", command=self.salvar_saidas).pack(side="left", padx=6)
+        ttk.Button(acoes, text="Copiar SQL", command=self.copiar_sql).pack(side="left", padx=6)
+        ttk.Button(acoes, text="Salvar SQL e CSV", command=self.salvar_saidas).pack(side="left")
+        self.lbl_copia = ttk.Label(acoes, text="", foreground="#0a7d25")
+        self.lbl_copia.pack(side="left", padx=8)
         ttk.Label(acoes, text="Revise e faça backup antes de executar em produção.", foreground="#8a6d00").pack(side="left", padx=12)
 
         self.texto_sql = tk.Text(pai, wrap="none", font=("Consolas", 9))
@@ -940,6 +943,25 @@ class App:
         self.texto_sql.delete("1.0", "end")
         self.texto_sql.insert("1.0", sql or "-- Nada a gerar com as regras atuais.")
         self.abas.select(self.aba_sql)
+
+    def copiar_sql(self):
+        """Joga a prévia inteira na área de transferência."""
+        sql = self.texto_sql.get("1.0", "end-1c").strip()
+        if not sql or sql.startswith("-- Nada a gerar"):
+            messagebox.showinfo(TITULO, "Não há SQL na prévia. Use \"Atualizar prévia\" primeiro.")
+            return
+        try:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(sql)
+            # sem o update a área de transferência fica vazia se a janela fechar
+            self.root.update()
+        except tk.TclError as exc:
+            messagebox.showerror(TITULO, f"Não foi possível copiar:\n{exc}")
+            return
+        linhas = sql.count("\n") + 1
+        self.lbl_copia.configure(text=f"Copiado: {linhas} linha(s), {len(sql)} caractere(s).")
+        self.root.after(6000, lambda: self.lbl_copia.configure(text=""))
+        self._escrever(f"SQL copiado para a área de transferência: {linhas} linha(s).", "ok")
 
     def salvar_saidas(self):
         if not self.resultados:
