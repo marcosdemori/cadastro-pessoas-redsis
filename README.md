@@ -80,6 +80,18 @@ Duas armadilhas comuns:
 
 Com varios servidores Firebird na mesma maquina, confira a porta: cada instancia tem a sua em `RemoteServicePort`, no `firebird.conf` da instalacao.
 
+#### Puxando a lista de CNPJs do banco
+
+A mesma conexao alimenta a **entrada**: *Puxar do Firebird...* na aba 1 da interface grafica, ou *Puxar do Firebird* na secao 1 do `index.html`, traz os CNPJs da propria `PESSOAS` em vez de colar uma lista.
+
+Vem tudo o que for CNPJ de 14 digitos, na ordem de `COD_PESS`. CPF, campo vazio e CNPJ repetido ficam de fora, e o total descartado aparece na tela.
+
+#### Banco sem servidor e extensao do arquivo
+
+O seletor de arquivo aceita `.fdb`, `.gdb` e `.red` — a instalacao do Redsis nomeia o banco `DBCOM.RED`.
+
+Deixando o **host vazio**, o driver abre o arquivo direto, sem servidor (modo embarcado). Com o host preenchido, vai pela rede ate a porta indicada. Nao deixe o host em branco sem querer: o arquivo pode estar sendo usado por um servidor, e as duas formas de abrir ao mesmo tempo nao combinam.
+
 **No aplicativo Python (`gui.py`)**: botão *Ler do banco (Firebird)...* na seção "Base atual da PESSOAS". Informe host, porta, caminho do `.fdb`, usuário, senha e charset, use *Testar conexão* e depois *Carregar base*.
 
 **No `index.html`**: o navegador não fala com o Firebird, então existe a ponte local `ponte.py`.

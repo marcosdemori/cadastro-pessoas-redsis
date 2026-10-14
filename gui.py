@@ -95,6 +95,7 @@ class App:
         lado = ttk.Frame(corpo)
         lado.pack(side="left", fill="y", padx=(8, 0))
         ttk.Button(lado, text="Importar arquivo...", command=self.importar_cnpjs).pack(fill="x", pady=2)
+        ttk.Button(lado, text="Puxar do Firebird...", command=self.abrir_firebird_lista).pack(fill="x", pady=2)
         ttk.Button(lado, text="Validar lista", command=self.validar).pack(fill="x", pady=2)
         ttk.Button(lado, text="Limpar tudo", command=self.limpar).pack(fill="x", pady=2)
         self.lbl_lista = ttk.Label(lado, text="Nenhum CNPJ carregado.", wraplength=160, foreground="#555")
@@ -468,11 +469,19 @@ class App:
 
     # ------------------------------------------------------------ Firebird
 
-    def abrir_firebird(self):
-        """Janela de conexao para ler a PESSOAS direto do Firebird."""
+    def abrir_firebird_lista(self):
+        self.abrir_firebird(modo="lista")
+
+    def abrir_firebird(self, modo="base"):
+        """Janela de conexao com o Firebird.
+
+        modo "base"  carrega a PESSOAS inteira para comparar os cadastros.
+        modo "lista" traz so os CNPJs, para a aba de entrada.
+        """
         cfg = fb.carregar_conexao()
         janela = tk.Toplevel(self.root)
-        janela.title("Ler base PESSOAS do Firebird")
+        janela.title("Puxar CNPJs do Firebird" if modo == "lista"
+                     else "Ler base PESSOAS do Firebird")
         janela.transient(self.root)
         janela.resizable(False, False)
 
@@ -502,6 +511,8 @@ class App:
             return entrada
 
         campo("Servidor (host):", "host", cfg.host, linha=1)
+        ttk.Label(corpo, text="vazio = abre o arquivo direto, sem servidor",
+                  foreground="#777").grid(row=1, column=2, sticky="w", padx=6)
         campo("Porta:", "porta", cfg.porta, largura=10, linha=2)
         entrada_banco = campo("Banco (.fdb ou alias):", "banco", cfg.banco, linha=3)
         ttk.Button(corpo, text="Procurar...",
@@ -608,10 +619,45 @@ class App:
             self.recalcular()
             janela.destroy()
 
+        def puxar_lista():
+            try:
+                atual = montar_cfg()
+                lbl_status.configure(text="Lendo os CNPJs...", foreground="#555")
+                janela.update_idletasks()
+                cnpjs, info = fb.ler_cnpjs(atual)
+            except fb.ErroFirebird as exc:
+                lbl_status.configure(text=str(exc), foreground="#b00020")
+                self._escrever(f"Falha ao ler o Firebird: {exc}", "erro")
+                return
+            if not cnpjs:
+                lbl_status.configure(
+                    text=f"Nenhum CNPJ de 14 dígitos em {atual.tabela} "
+                         f"({info['lidas']} linha(s) lidas).",
+                    foreground="#b36b00")
+                return
+            try:
+                fb.salvar_conexao(atual)
+            except OSError as exc:
+                self._escrever(f"CNPJs lidos, mas não deu para gravar as preferências: {exc}", "aviso")
+
+            self.texto_cnpj.delete("1.0", "end")
+            self.texto_cnpj.insert("1.0", "\n".join(cnpjs))
+            self._escrever(
+                f"CNPJs puxados do Firebird: {info['validos']} de {info['lidas']} linha(s); "
+                f"{info['ignorados']} fora (CPF, vazio, tamanho diferente de 14 ou repetido).",
+                "ok",
+            )
+            self.validar()
+            self.abas.select(self.aba_entrada)
+            janela.destroy()
+
         botoes = ttk.Frame(corpo)
         botoes.grid(row=14, column=0, columnspan=3, sticky="e", pady=(12, 0))
         ttk.Button(botoes, text="Testar conexão", command=testar).pack(side="left", padx=4)
-        ttk.Button(botoes, text="Carregar base", command=carregar).pack(side="left", padx=4)
+        if modo == "lista":
+            ttk.Button(botoes, text="Puxar CNPJs", command=puxar_lista).pack(side="left", padx=4)
+        else:
+            ttk.Button(botoes, text="Carregar base", command=carregar).pack(side="left", padx=4)
         ttk.Button(botoes, text="Fechar", command=janela.destroy).pack(side="left", padx=4)
 
         entrada_banco.focus_set()
@@ -627,7 +673,7 @@ class App:
     def _escolher_fdb(self, var):
         arquivo = filedialog.askopenfilename(
             title="Selecione o arquivo do banco",
-            filetypes=[("Banco Firebird", "*.fdb *.gdb"), ("Todos os arquivos", "*.*")],
+            filetypes=[("Banco Firebird", "*.fdb *.gdb *.red *.RED"), ("Todos os arquivos", "*.*")],
         )
         if arquivo:
             var.set(arquivo)

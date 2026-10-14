@@ -1,7 +1,7 @@
 """Ponte local entre o index.html e o Firebird.
 
 O navegador nao fala com o Firebird. Este servidor resolve isso: ele serve o
-proprio index.html em http://127.0.0.1:8777/ e expoe tres rotas JSON que leem
+proprio index.html em http://127.0.0.1:8777/ e expoe quatro rotas JSON que leem
 a tabela PESSOAS pelo modulo firebird_db.
 
 Uso:
@@ -141,7 +141,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         rota = self.path.split("?", 1)[0]
         bruto, falha = self._ler_corpo()
-        if rota not in ("/api/testar", "/api/pessoas"):
+        if rota not in ("/api/testar", "/api/pessoas", "/api/cnpjs"):
             self._erro(404, "Rota desconhecida.")
             return
         if not self._autorizado():
@@ -160,6 +160,15 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if rota == "/api/testar":
                 self._json(200, fb.testar(conexao))
+                return
+            if rota == "/api/cnpjs":
+                cnpjs, info = fb.ler_cnpjs(conexao)
+                if dados.get("lembrar"):
+                    try:
+                        fb.salvar_conexao(conexao)
+                    except OSError:
+                        pass
+                self._json(200, {"cnpjs": cnpjs, "info": info})
                 return
             base, info = fb.ler_base(conexao)
             if dados.get("lembrar"):

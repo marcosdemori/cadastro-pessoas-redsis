@@ -74,7 +74,12 @@ class Conexao:
     biblioteca: str = ""     # caminho do fbclient.dll; vazio = procurar sozinho
 
     def normalizar(self):
-        self.host = (self.host or "localhost").strip()
+        # Host vazio nao vira "localhost": e o modo embarcado, em que o driver
+        # abre o arquivo direto, sem servidor. Trocar o vazio por "localhost"
+        # mandaria a conexao para o servidor da porta padrao, que pode ser
+        # outra instalacao do Firebird e recusar o arquivo com
+        # "unsupported on-disk structure".
+        self.host = (self.host or "").strip()
         self.banco = (self.banco or "").strip()
         self.biblioteca = (self.biblioteca or "").strip().strip('"')
         self.usuario = (self.usuario or "SYSDBA").strip()
@@ -419,6 +424,57 @@ def testar(cfg):
         "colunas_usadas": usadas,
         "colunas_faltando": faltando,
     }
+
+
+def ler_cnpjs(cfg):
+    """Devolve a lista de CNPJs da PESSOAS para consultar na Receita.
+
+    Sem filtro: vem tudo o que for CNPJ de 14 digitos, na ordem de COD_PESS
+    quando a coluna existir. CPF e campo vazio ficam de fora, e CNPJ repetido
+    aparece uma vez so.
+    """
+    cfg.normalizar()
+    colunas = colunas_da_tabela(cfg)
+    if not colunas:
+        raise ErroFirebird(f"A tabela {cfg.tabela} nao existe nesse banco.")
+    if cfg.coluna_cnpj not in colunas:
+        raise ErroFirebird(f"A tabela {cfg.tabela} nao tem a coluna {cfg.coluna_cnpj}.")
+
+    campos = [cfg.coluna_cnpj]
+    if "COD_PESS" in colunas:
+        campos.append("COD_PESS")
+
+    conexao = _abrir(cfg)
+    cnpjs = []
+    vistos = set()
+    lidas = 0
+    ignoradas = 0
+    try:
+        cursor = conexao.cursor()
+        sql = montar_select(cfg, campos)
+        if "COD_PESS" in campos:
+            sql += " ORDER BY COD_PESS"
+        cursor.execute(sql)
+        while True:
+            lote = cursor.fetchmany(1000)
+            if not lote:
+                break
+            for linha in lote:
+                lidas += 1
+                cnpj = core.somente_numero(_valor_texto(linha[0]))
+                if len(cnpj) != 14 or cnpj in vistos:
+                    ignoradas += 1
+                    continue
+                vistos.add(cnpj)
+                cnpjs.append(cnpj)
+    except ErroFirebird:
+        raise
+    except Exception as exc:
+        raise ErroFirebird(_mensagem(exc)) from exc
+    finally:
+        _fechar(conexao)
+
+    return cnpjs, {"lidas": lidas, "validos": len(cnpjs), "ignorados": ignoradas}
 
 
 def montar_select(cfg, colunas):

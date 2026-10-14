@@ -113,6 +113,14 @@ def main():
         com_limite = fb.Conexao(banco="x.fdb", limite=5).normalizar()
         checar("limite vira FIRST n", "FIRST 5" in fb.montar_select(com_limite, ["COD_PESS"]))
 
+        # host vazio e o modo embarcado; trocar por "localhost" mandaria a
+        # conexao para o servidor da porta padrao, que pode ser outra versao
+        checar("host vazio continua vazio",
+               fb.Conexao(banco="x.fdb", host="").normalizar().host == "",
+               fb.Conexao(banco="x.fdb", host="").normalizar().host)
+        checar("host em branco tambem", fb.Conexao(banco="x.fdb", host="   ").normalizar().host == "")
+        checar("o padrao continua localhost", fb.Conexao(banco="x.fdb").normalizar().host == "localhost")
+
         # --- nomes de tabela e coluna so aceitam identificador
         for valor, rotulo in (("PESSOAS; DROP TABLE X", "tabela"), ("A B", "tabela")):
             try:
@@ -144,6 +152,24 @@ def main():
                "EMAIL_PESS" not in info["colunas"] and "COD_MUN" not in info["colunas"],
                str(info["colunas"]))
         checar("a conexao e sempre fechada", all(c.fechada for c in abertas))
+
+        # --- lista de CNPJs para a aba de entrada
+        cnpjs, info_lista = fb.ler_cnpjs(fb.Conexao(banco="x.fdb", senha="x"))
+        checar("a lista traz so os CNPJ de 14 digitos",
+               cnpjs == ["11222333000181", "44555666000177"], str(cnpjs))
+        checar("a lista conta lidos e descartados",
+               info_lista["lidas"] == 4 and info_lista["validos"] == 2
+               and info_lista["ignorados"] == 2, str(info_lista))
+
+        repetidos = list(LINHAS_FAKE)
+        LINHAS_FAKE.append(LINHAS_FAKE[0])
+        try:
+            cnpjs, info_rep = fb.ler_cnpjs(fb.Conexao(banco="x.fdb", senha="x"))
+        finally:
+            LINHAS_FAKE[:] = repetidos
+        checar("CNPJ repetido entra uma vez so",
+               cnpjs.count("11222333000181") == 1 and info_rep["ignorados"] == 3,
+               f"{cnpjs} {info_rep}")
 
         # --- mesmo formato do CSV
         do_csv = core.carregar_base(
@@ -292,6 +318,14 @@ def main():
             checar("a ponte devolve a base lida",
                    codigo == 200 and len(corpo["base"]) == 2 and corpo["info"]["lidas"] == 4,
                    f"{codigo} {str(corpo)[:200]}")
+
+            codigo, corpo = req("/api/cnpjs", {"banco": "x.fdb", "senha": "x"})
+            checar("a ponte devolve a lista de CNPJs",
+                   codigo == 200 and corpo["cnpjs"] == ["11222333000181", "44555666000177"],
+                   f"{codigo} {str(corpo)[:160]}")
+
+            codigo, _ = req("/api/cnpjs", {"banco": "x.fdb"}, token="token-errado")
+            checar("a rota dos CNPJs tambem exige o token", codigo == 403, str(codigo))
 
             codigo, corpo = req("/api/testar", {"banco": "x.fdb", "tabela": "A;DROP TABLE X"})
             checar("a ponte barra tabela fora do padrao", codigo == 400, f"{codigo} {corpo}")

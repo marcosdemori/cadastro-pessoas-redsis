@@ -195,6 +195,39 @@ def main():
             con.close()
         checar("rodar o bloco duas vezes nao duplica cadastro", total == 2, f"total={total}")
 
+        # --- leitura da PESSOAS num banco de verdade, com a extensao .RED que
+        #     o Redsis usa, em modo embarcado (host vazio, sem servidor)
+        alvo = os.path.join(pasta, "DBCOM.RED").replace("\\", "/")
+        con = driver.create_database(alvo, user="SYSDBA", password="masterkey", charset="WIN1252")
+        try:
+            cur = con.cursor()
+            cur.execute("CREATE TABLE PESSOAS (COD_PESS INTEGER NOT NULL PRIMARY KEY, "
+                        "CNPJCPF_PESS VARCHAR(20), NOM_PESS VARCHAR(80))")
+            con.commit()
+            linhas = [(3, "47.158.914/0001-49"), (1, "20202564000114"), (2, "123.456.789-01"),
+                      (4, ""), (5, None), (6, "20202564000114"), (7, "13192179000178")]
+            for cod, cnpj in linhas:
+                cur.execute("INSERT INTO PESSOAS (COD_PESS, CNPJCPF_PESS, NOM_PESS) VALUES (?, ?, ?)",
+                            (cod, cnpj, f"P{cod}"))
+            con.commit()
+        finally:
+            con.close()
+
+        conexao = fb.Conexao(banco=alvo, host="", usuario="SYSDBA",
+                             senha="masterkey", charset="WIN1252")
+        cnpjs, info_lista = fb.ler_cnpjs(conexao)
+        checar("le os CNPJs de um .RED pelo modo embarcado",
+               cnpjs == ["20202564000114", "47158914000149", "13192179000178"], str(cnpjs))
+        checar("CPF, vazio, nulo e repetido ficam de fora",
+               info_lista["validos"] == 3, str(info_lista))
+
+        base_real, info_base = fb.ler_base(conexao)
+        checar("ler_base no mesmo .RED devolve os mesmos CNPJs",
+               sorted(base_real) == sorted(cnpjs) and info_base["validas"] == 3,
+               f"{sorted(base_real)} {info_base}")
+        checar("o CNPJ formatado chega so com digitos",
+               base_real["47158914000149"]["CNPJCPF_PESS"] == "47158914000149")
+
         # --- COD_PESS manual continua saindo como INSERTs soltos
         cfg.cod_strategy = "MANUAL"
         cfg.cod_inicio = 500

@@ -4,6 +4,9 @@
 - Campo *Biblioteca cliente*: o `fbclient.dll` e procurado sozinho nas pastas padrao e no PATH, com a arquitetura conferida antes de carregar e as versoes incompativeis descartadas.
 - Os INSERTs dos novos cadastros passam a sair como `INSERT ... SELECT` independentes, um comando por cadastro, em vez de um `EXECUTE BLOCK`: o FireDAC abre o bloco como consulta e para em `-308. Cannot open / define command, which does not return result sets`. O `EXECUTE BLOCK` continua disponivel no seletor *INSERT dos novos* (`--formato-insert BLOCO`).
 - Os INSERTs dos novos cadastros passam a sair **sem** `SET TERM`, que nao e SQL e fazia FireDAC, JDBC e o SQL Editor do IBExpert responderem `Token unknown - line 1, column 5 TERM`. A opcao *Incluir SET TERM nos INSERTs* (`--set-term`) liga de volta para o isql e o Script Executive.
+- A lista de CNPJs da consulta tambem pode vir do banco: *Puxar do Firebird* na aba de entrada e na secao 1 do `index.html`, com rota `/api/cnpjs` na ponte. Traz os CNPJ de 14 digitos da `PESSOAS`, na ordem de `COD_PESS`, sem CPF, vazio nem repetido.
+- O seletor de arquivo do banco aceita `.red`, a extensao usada pela instalacao do Redsis (`DBCOM.RED`).
+- Host vazio deixa de virar `localhost` e passa a significar modo embarcado, abrindo o arquivo sem servidor. Antes a conexao ia parar no servidor da porta padrao, que podia ser outra versao do Firebird e recusar o arquivo com `unsupported on-disk structure`.
 - Botao *Copiar SQL* na aba 4 da interface grafica e na secao 6 do `index.html`, que joga a previa inteira na area de transferencia.
 - Nova bateria `tests/test_sql_firebird.py`, que executa o SQL gerado em um Firebird embarcado de verdade.
 
