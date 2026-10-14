@@ -232,6 +232,16 @@ def _carregar_biblioteca(caminho):
             carregar(caminho)
     except ErroFirebird:
         raise
+    except AttributeError as exc:
+        # A API orientada a objetos que o firebird-driver usa so existe a partir
+        # do fbclient 3.0; com o do Firebird 2.5 falta fb_get_master_interface.
+        if "fb_get_master_interface" in str(exc):
+            raise ErroFirebird(
+                f"{caminho} e do Firebird 2.5. O firebird-driver precisa de um "
+                f"fbclient.dll 3.0 ou mais novo.\nUse a biblioteca de uma instalacao "
+                f"3.0, 4.0 ou 5.0, ou instale o fdb (pip install fdb) para falar com 2.5."
+            ) from exc
+        raise ErroFirebird(f"Nao deu para carregar {caminho}: {_mensagem(exc)}") from exc
     except Exception as exc:
         raise ErroFirebird(f"Nao deu para carregar {caminho}: {_mensagem(exc)}") from exc
 
@@ -241,17 +251,29 @@ def _carregar_biblioteca(caminho):
 def _preparar_biblioteca(cfg):
     """Garante uma biblioteca cliente antes de conectar.
 
-    Com o campo preenchido usa aquele caminho. Vazio, tenta o que ja estiver
-    carregado e, se nao houver, o primeiro fbclient.dll encontrado no sistema.
+    Com o campo preenchido usa aquele caminho, e o erro dele vai direto para a
+    tela. Vazio, tenta as encontradas em ordem ate uma carregar: assim um
+    fbclient de 2.5 na frente da fila nao impede de chegar na de 5.0.
     """
     if cfg.biblioteca:
         _carregar_biblioteca(cfg.biblioteca)
         return
     if _biblioteca_carregada:
         return
+
     achados = localizar_clientes()
-    if achados:
-        _carregar_biblioteca(achados[0])
+    if not achados:
+        return
+    erros = []
+    for caminho in achados:
+        try:
+            _carregar_biblioteca(caminho)
+            return
+        except ErroFirebird as exc:
+            erros.append(f"{caminho}: {str(exc).splitlines()[0]}")
+    raise ErroFirebird(
+        "Nenhuma das bibliotecas encontradas carregou:\n  " + "\n  ".join(erros)
+    )
 
 
 # ------------------------------------------------------------------- drivers
@@ -328,7 +350,12 @@ def _mensagem(exc):
     elif "password" in baixo or "user name" in baixo:
         dica = "\nUsuario ou senha recusados pelo servidor."
     elif "unavailable" in baixo or "connection refused" in baixo or "network" in baixo:
-        dica = f"\nO servidor nao respondeu. Confira host, porta e firewall."
+        dica = ("\nO servidor nao respondeu. Confira host, porta e firewall. "
+                "Com varias instalacoes do Firebird na mesma maquina, cada instancia tem "
+                "a sua porta em RemoteServicePort, no firebird.conf.")
+        if _biblioteca_carregada:
+            dica += (f"\nBiblioteca em uso: {_biblioteca_carregada} — uma biblioteca mais "
+                     f"velha que o servidor tambem da esta mesma mensagem.")
     elif "no permission" in baixo or "file is not a valid database" in baixo:
         dica = "\nCaminho do .fdb incorreto ou sem permissao de leitura."
     return texto + dica

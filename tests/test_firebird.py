@@ -207,6 +207,41 @@ def main():
         checar("a lista de clientes descarta a arquitetura errada",
                all(fb.bits_da_dll(c) in (None, meus) for c in fb.localizar_clientes()))
 
+        # sem caminho informado, uma biblioteca que nao carrega nao pode barrar
+        # as seguintes: o fbclient do Firebird 2.5 nao serve ao firebird-driver.
+        carregar_real = fb._carregar_biblioteca
+        tentadas = []
+
+        def carregar_fake(caminho):
+            tentadas.append(caminho)
+            if "2_5" in caminho:
+                raise fb.ErroFirebird("e do Firebird 2.5")
+            fb._biblioteca_carregada = caminho
+
+        fb._carregar_biblioteca = carregar_fake
+        fb._biblioteca_carregada = None
+        achar_real = fb.localizar_clientes
+        fb.localizar_clientes = lambda *a, **k: ["X/2_5/fbclient.dll", "X/5_0/fbclient.dll"]
+        try:
+            fb._preparar_biblioteca(fb.Conexao(banco="x.fdb"))
+            checar("pula a biblioteca que nao carrega e usa a proxima",
+                   fb._biblioteca_carregada == "X/5_0/fbclient.dll" and len(tentadas) == 2,
+                   f"{fb._biblioteca_carregada} / {tentadas}")
+
+            fb._biblioteca_carregada = None
+            fb.localizar_clientes = lambda *a, **k: ["X/2_5/fbclient.dll"]
+            try:
+                fb._preparar_biblioteca(fb.Conexao(banco="x.fdb"))
+                ok, msg = False, "nao reclamou"
+            except fb.ErroFirebird as exc:
+                msg = str(exc)
+                ok = "2_5" in msg
+            checar("sem nenhuma que carregue, lista o que falhou em cada uma", ok, msg)
+        finally:
+            fb._carregar_biblioteca = carregar_real
+            fb.localizar_clientes = achar_real
+            fb._biblioteca_carregada = None
+
         # --- config: a senha so e gravada quando o usuario pede
         alvo = fb.salvar_conexao(fb.Conexao(banco="x.fdb", senha="segredo"))
         gravado = json.load(open(alvo, encoding="utf-8"))
