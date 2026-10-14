@@ -91,6 +91,13 @@ MODOS_SQL = {
     "UPSERT": "UPDATE OR INSERT",
 }
 
+# Como os INSERTs dos novos cadastros sao escritos quando o COD_PESS e
+# calculado na hora. Ver gerar_execute_block_novos.
+FORMATOS_INSERT = {
+    "INDEPENDENTE": "INSERT ... SELECT, um comando por cadastro (roda em qualquer cliente)",
+    "BLOCO": "EXECUTE BLOCK unico (isql e Script Executive do IBExpert)",
+}
+
 # Acompanha a versao do index.html: o cabecalho do .sql sai identico nos dois.
 VERSAO = "v4.3"
 
@@ -366,6 +373,7 @@ class Config:
     # IBExpert precisam dele. FireDAC, JDBC, ADO e o SQL Editor do IBExpert
     # mandam um statement por vez e quebram com ele. Por isso sai desligado.
     set_term: bool = False
+    formato_insert: str = "INDEPENDENTE"
 
     def normalizar(self):
         self.tipo_sql = str(self.tipo_sql or "SMART").upper()
@@ -383,6 +391,9 @@ class Config:
         self.tentativas = max(1, min(5, int(self.tentativas)))
         self.cod_inicio = max(1, int(self.cod_inicio or 1))
         self.set_term = bool(self.set_term)
+        self.formato_insert = str(self.formato_insert or "INDEPENDENTE").upper()
+        if self.formato_insert not in FORMATOS_INSERT:
+            self.formato_insert = "INDEPENDENTE"
         return self
 
 
@@ -952,11 +963,39 @@ def montar_upsert(r, cod_expr, cfg):
     )
 
 
+PROXIMO_COD = "(SELECT COALESCE(MAX(COD_PESS), 0) + 1 FROM PESSOAS)"
+
+
+def montar_insert_select(r, cfg):
+    """INSERT de um novo cadastro como comando independente.
+
+    O COD_PESS sai de um subselect e o WHERE NOT EXISTS segura o CNPJ repetido,
+    entao cada comando se vira sozinho: nao precisa de EXECUTE BLOCK, de
+    SET TERM nem de variavel, e pode ser executado por qualquer cliente.
+    """
+    campos, valores = insert_data(r, PROXIMO_COD, cfg)
+    return (
+        "INSERT INTO PESSOAS (\n    "
+        + ",\n    ".join(campos)
+        + "\n  )\n  SELECT\n    "
+        + ",\n    ".join(valores)
+        + "\n  FROM RDB$DATABASE\n"
+        + f"  WHERE NOT EXISTS (SELECT 1 FROM PESSOAS WHERE {cnpj_where(r.cnpj)});"
+    )
+
+
 def gerar_execute_block_novos(novos, cfg):
     """INSERTs dos novos cadastros.
 
-    No modo AUTO sai um EXECUTE BLOCK que calcula MAX(COD_PESS)+1 na hora da
-    execucao e ainda confere se o CNPJ ja existe.
+    Com COD_PESS automatico o codigo e calculado na hora da execucao e o CNPJ
+    repetido e barrado, de duas formas (cfg.formato_insert):
+
+    INDEPENDENTE  um INSERT ... SELECT por cadastro. E o padrao, porque roda
+                  em qualquer cliente.
+    BLOCO         um EXECUTE BLOCK so. Atomico, mas o cliente precisa aceitar
+                  PSQL; FireDAC, por exemplo, tenta abri-lo como consulta e
+                  para em "-308 Cannot open / define command, which does not
+                  return result sets".
     """
     if not novos:
         return ""
@@ -966,6 +1005,9 @@ def gerar_execute_block_novos(novos, cfg):
         if inicio < 1:
             return "-- INFORME UM COD_PESS INICIAL VÁLIDO PARA OS NOVOS REGISTROS."
         return "\n\n".join(montar_insert(r, str(inicio + i), cfg) for i, r in enumerate(novos))
+
+    if cfg.formato_insert == "INDEPENDENTE":
+        return "\n\n".join(montar_insert_select(r, cfg) for r in novos)
 
     corpos = []
     for r in novos:

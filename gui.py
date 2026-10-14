@@ -163,13 +163,25 @@ class App:
         ttk.Checkbutton(l3, text="Permitir SQL para CNPJ não ativo (BAIXADO, INAPTO, SUSPENSO)", variable=self.var_inativos, command=self.recalcular).pack(anchor="w")
         ttk.Checkbutton(l3, text="Forçar SIT_PESS = 'ATIVO' (sem isso a situação vem mapeada da Receita)", variable=self.var_forcar, command=self.recalcular).pack(anchor="w")
         self.var_set_term = tk.BooleanVar(value=False)
-        ttk.Checkbutton(
+        self.chk_set_term = ttk.Checkbutton(
             l3,
-            text="Incluir SET TERM nos INSERTs (só para isql e Script Executive do IBExpert; "
-                 "FireDAC e o SQL Editor quebram com ele)",
+            text="Incluir SET TERM no EXECUTE BLOCK (só para isql e Script Executive do IBExpert)",
             variable=self.var_set_term,
             command=self.recalcular,
-        ).pack(anchor="w")
+        )
+        self.chk_set_term.pack(anchor="w")
+
+        l4 = ttk.Frame(geracao)
+        l4.pack(fill="x", pady=(6, 0))
+        ttk.Label(l4, text="INSERT dos novos:").pack(side="left")
+        self.var_formato = tk.StringVar(value="INDEPENDENTE")
+        cb_formato = ttk.Combobox(l4, state="readonly", width=62,
+                                  values=[r for _, r in core.FORMATOS_INSERT.items()])
+        cb_formato.current(0)
+        cb_formato.pack(side="left", padx=(4, 0))
+        chaves = list(core.FORMATOS_INSERT)
+        cb_formato.bind("<<ComboboxSelected>>",
+                        lambda e: self._formato_mudou(chaves[cb_formato.current()]))
 
         campos = ttk.Labelframe(pai, text="Campos que podem ser gravados", padding=8)
         campos.pack(fill="both", expand=True, pady=(10, 0))
@@ -295,6 +307,18 @@ class App:
         var.set(valor)
         self.recalcular()
 
+    def _formato_mudou(self, formato):
+        self.var_formato.set(formato)
+        self._atualizar_set_term()
+        self.recalcular()
+
+    def _atualizar_set_term(self):
+        """SET TERM so faz sentido no EXECUTE BLOCK."""
+        bloco = self.var_formato.get() == "BLOCO"
+        self.chk_set_term.configure(state="normal" if bloco else "disabled")
+        if not bloco:
+            self.var_set_term.set(False)
+
     def _modo_mudou(self, modo):
         self.var_modo.set(modo)
         self._atualizar_cod()
@@ -361,6 +385,8 @@ class App:
         self.var_cod_auto.set(cfg.cod_strategy == "AUTO")
         self.var_cod_inicio.set(str(cfg.cod_inicio))
         self.var_set_term.set(bool(cfg.set_term))
+        self.var_formato.set(cfg.formato_insert)
+        self._atualizar_set_term()
         for key, var in self.vars_campos.items():
             var.set(key in cfg.campos)
         self._atualizar_cod()
@@ -387,6 +413,7 @@ class App:
             cod_strategy="MANUAL" if manual else "AUTO",
             cod_inicio=int(numero(self.var_cod_inicio, 1)),
             set_term=self.var_set_term.get(),
+            formato_insert=self.var_formato.get(),
         ).normalizar()
 
     # -------------------------------------------------------------- entrada

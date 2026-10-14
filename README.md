@@ -166,9 +166,37 @@ Antes de cada INSERT há uma verificação de existência pelo CNPJ.
 - **Somente UPDATE**: ignora registros classificados como novos.
 - **UPDATE OR INSERT**: mantido para compatibilidade; prefira o modo inteligente quando houver base importada.
 
-### `SET TERM` nos INSERTs
+### Formato dos INSERTs dos novos cadastros
 
-Os novos cadastros saem em um `EXECUTE BLOCK`, que calcula `MAX(COD_PESS)+1` na hora de executar. Por padrao o bloco sai **sem** `SET TERM`.
+Com `COD_PESS` automatico, o codigo e calculado na hora de executar e o CNPJ repetido e barrado. Ha duas formas, no seletor *INSERT dos novos* (`--formato-insert` na linha de comando):
+
+**`INDEPENDENTE` (padrao)** — um comando por cadastro:
+
+```sql
+INSERT INTO PESSOAS (COD_PESS, CNPJCPF_PESS, ...)
+  SELECT (SELECT COALESCE(MAX(COD_PESS), 0) + 1 FROM PESSOAS), '47158914000149', ...
+  FROM RDB$DATABASE
+  WHERE NOT EXISTS (SELECT 1 FROM PESSOAS WHERE ... = '47158914000149');
+```
+
+E um `INSERT` comum, entao roda em qualquer cliente, e repetir o arquivo nao duplica cadastro.
+
+**`BLOCO`** — um `EXECUTE BLOCK` so, atomico. Exige um cliente que aceite PSQL.
+
+Nos dois casos, com varias pessoas cadastrando ao mesmo tempo, dois `MAX(COD_PESS)+1` podem cair no mesmo numero; rode o script com o cadastro parado.
+
+#### Por que o padrao nao e o `EXECUTE BLOCK`
+
+Duas mensagens do app Delphi (FireDAC) levaram a isso:
+
+- `Token unknown - line 1, column 5 / TERM` — o `SET TERM` chegando ao servidor (veja abaixo);
+- `-308. Cannot open / define command, which does not return result sets` — o FireDAC abre o `EXECUTE BLOCK` como se fosse consulta, e o bloco nao devolve linhas.
+
+Dar um `RETURNS ... SUSPEND` ao bloco resolveria a segunda mensagem, mas foi descartado: medido contra um Firebird real, um bloco com `SUSPEND` executado **sem** que o cliente busque a linha nao insere nada e nao reclama. Falha silenciosa e pior que erro.
+
+### `SET TERM` no `EXECUTE BLOCK`
+
+Por padrao o bloco sai **sem** `SET TERM`.
 
 `SET TERM` nao e SQL: e comando do programa cliente. Quem manda um comando por vez — FireDAC (o app Delphi), JDBC, ADO, o driver Python, o SQL Editor do IBExpert — recebe o `SET TERM` como se fosse SQL e devolve:
 
@@ -179,7 +207,7 @@ Token unknown - line 1, column 5
 TERM
 ```
 
-Marque *Incluir SET TERM nos INSERTs* (`--set-term` na linha de comando) so para o **isql** e o **Script Executive** do IBExpert, que leem o arquivo como script e precisam saber onde um comando termina.
+Marque *Incluir SET TERM no EXECUTE BLOCK* (`--set-term` na linha de comando) so para o **isql** e o **Script Executive** do IBExpert, que leem o arquivo como script e precisam saber onde um comando termina.
 
 Nos dois casos o bloco em si e o mesmo, e `tests/test_sql_firebird.py` executa os dois contra um Firebird embarcado de verdade: sem `SET TERM` o banco aceita, com `SET TERM` ele recusa com o erro acima.
 

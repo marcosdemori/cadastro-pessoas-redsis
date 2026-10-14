@@ -77,6 +77,8 @@ def config_de(cen):
         situacao_sempre_ativo=c["situacaoSempreAtivo"],
         cod_strategy=c["codStrategy"],
         cod_inicio=c["codInicio"],
+        set_term=c.get("usarSetTerm", False),
+        formato_insert=c.get("formatoInsert", "INDEPENDENTE"),
     ).normalizar()
 
 
@@ -140,6 +142,8 @@ def variantes():
         ("SMART sem preservar", {"preservarVazios": False}, seguros),
         ("SMART inativos", {"incluirNaoAtivos": True}, seguros),
         ("SMART forca ativo", {"situacaoSempreAtivo": True}, todos),
+        ("SMART bloco", {"formatoInsert": "BLOCO"}, todos),
+        ("SMART bloco com SET TERM", {"formatoInsert": "BLOCO", "usarSetTerm": True}, todos),
         ("SMART todos campos", {}, todos),
         ("SMART so razao", {}, ["razao_social"]),
         ("UPDATE padrao", {"tipoSql": "UPDATE"}, seguros),

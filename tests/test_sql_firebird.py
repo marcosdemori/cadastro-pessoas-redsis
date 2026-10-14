@@ -122,7 +122,45 @@ def main():
 
         cfg = core.Config()
 
-        # --- padrao: sem SET TERM, que e o que roda em quem manda um statement
+        # --- padrao: INSERT ... SELECT independentes, que e o que roda em
+        #     qualquer cliente, inclusive os que so sabem ExecSQL
+        padrao = core.Config().normalizar()
+        checar("o formato padrao e INDEPENDENTE", padrao.formato_insert == "INDEPENDENTE",
+               padrao.formato_insert)
+        soltos = core.gerar_execute_block_novos(novos, padrao)
+        checar("o padrao nao usa EXECUTE BLOCK nem SET TERM",
+               "EXECUTE BLOCK" not in soltos and "SET TERM" not in soltos,
+               soltos.splitlines()[0])
+
+        def executar_varios(comandos):
+            alvo = os.path.join(pasta, f"v{len(os.listdir(pasta))}.fdb").replace("\\", "/")
+            con = preparar(driver, alvo)
+            try:
+                cur = con.cursor()
+                for comando in comandos:
+                    cur.execute(comando)
+                con.commit()
+                # roda tudo de novo: o WHERE NOT EXISTS tem que segurar
+                for comando in comandos:
+                    cur.execute(comando)
+                con.commit()
+                cur.execute("SELECT COUNT(*), MIN(COD_PESS), MAX(COD_PESS) FROM PESSOAS")
+                return cur.fetchone(), None
+            except Exception as exc:
+                return None, str(exc).replace("\n", " ")[:160]
+            finally:
+                con.close()
+
+        comandos = [c.strip().rstrip(";") for c in soltos.split(";\n\n") if c.strip()]
+        checar("sai um comando por cadastro", len(comandos) == len(novos), str(len(comandos)))
+        contagem, erro = executar_varios(comandos)
+        checar("cada INSERT ... SELECT roda sozinho e nao duplica na 2a passada",
+               erro is None and contagem == (2, 1, 2), erro or str(contagem))
+
+        # --- o EXECUTE BLOCK continua disponivel para quem executa por script
+        cfg.formato_insert = "BLOCO"
+
+        # --- sem SET TERM, que e o que roda em quem manda um statement
         cfg.set_term = False
         sql = core.gerar_execute_block_novos(novos, cfg.normalizar())
         checar("o padrao nao emite SET TERM", "SET TERM" not in sql, sql.splitlines()[0])

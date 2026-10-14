@@ -2,6 +2,7 @@
 
 - A base da PESSOAS pode vir direto do Firebird, alem do CSV/TXT: modulo `firebird_db.py`, botao na interface grafica e ponte local `ponte.py` para o `index.html`.
 - Campo *Biblioteca cliente*: o `fbclient.dll` e procurado sozinho nas pastas padrao e no PATH, com a arquitetura conferida antes de carregar e as versoes incompativeis descartadas.
+- Os INSERTs dos novos cadastros passam a sair como `INSERT ... SELECT` independentes, um comando por cadastro, em vez de um `EXECUTE BLOCK`: o FireDAC abre o bloco como consulta e para em `-308. Cannot open / define command, which does not return result sets`. O `EXECUTE BLOCK` continua disponivel no seletor *INSERT dos novos* (`--formato-insert BLOCO`).
 - Os INSERTs dos novos cadastros passam a sair **sem** `SET TERM`, que nao e SQL e fazia FireDAC, JDBC e o SQL Editor do IBExpert responderem `Token unknown - line 1, column 5 TERM`. A opcao *Incluir SET TERM nos INSERTs* (`--set-term`) liga de volta para o isql e o Script Executive.
 - Nova bateria `tests/test_sql_firebird.py`, que executa o SQL gerado em um Firebird embarcado de verdade.
 
