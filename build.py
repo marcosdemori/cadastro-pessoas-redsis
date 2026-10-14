@@ -16,9 +16,13 @@ import sys
 AQUI = os.path.dirname(os.path.abspath(__file__))
 ICONE = os.path.join(AQUI, "icone.ico")
 
+INDEX = os.path.join(AQUI, "index.html")
+
+# (nome do exe, script, modo de console, arquivos extras a embutir)
 ALVOS = [
-    ("ConsultaCNPJ", "gui.py", "--noconsole"),
-    ("ConsultaCNPJ-CLI", "CNPJ.py", "--console"),
+    ("ConsultaCNPJ", "gui.py", "--noconsole", []),
+    ("ConsultaCNPJ-CLI", "CNPJ.py", "--console", []),
+    ("PonteFirebird", "ponte.py", "--console", [INDEX]),
 ]
 
 
@@ -61,25 +65,27 @@ def main():
 
     for pasta in ("build", "dist"):
         shutil.rmtree(os.path.join(AQUI, pasta), ignore_errors=True)
-    for nome, _, _ in ALVOS:
+    for nome, *_ in ALVOS:
         spec = os.path.join(AQUI, f"{nome}.spec")
         if os.path.exists(spec):
             os.remove(spec)
 
-    for nome, script, modo in ALVOS:
+    for nome, script, modo, extras in ALVOS:
         cmd = [sys.executable, "-m", "PyInstaller", "--onefile", modo,
                "--name", nome, "--clean", "--noconfirm"]
         if tem_icone:
             # --icon define o icone do .exe; --add-data embute o arquivo para a
             # janela do Tk poder usar o mesmo icone
             cmd += ["--icon", ICONE, "--add-data", f"{ICONE}{os.pathsep}."]
+        for extra in extras:
+            cmd += ["--add-data", f"{extra}{os.pathsep}."]
         cmd.append(os.path.join(AQUI, script))
         if not rodar(cmd, f"empacotando {nome}.exe"):
             print(f"\nFALHOU ao gerar {nome}.exe")
             return 1
 
     print("\n" + "=" * 60)
-    for nome, _, _ in ALVOS:
+    for nome, *_ in ALVOS:
         caminho = os.path.join(AQUI, "dist", f"{nome}.exe")
         tamanho = os.path.getsize(caminho) / (1024 * 1024)
         print(f"{caminho}  ({tamanho:.1f} MB)")

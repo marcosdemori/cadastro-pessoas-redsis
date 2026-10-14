@@ -55,6 +55,37 @@ A ferramenta aceita `;`, vírgula ou TAB como separador e reconhece CNPJ formata
 
 Também existe o arquivo `MODELO_BASE_PESSOAS.csv` com o cabeçalho esperado.
 
+### Lendo direto do Firebird
+
+Em vez de exportar o CSV, a base pode vir da própria tabela `PESSOAS`.
+
+Instale um dos drivers Python de Firebird:
+
+```bash
+pip install firebird-driver
+```
+
+`firebird-driver` atende Firebird 3, 4 e 5; para Firebird 2.5 use `pip install fdb`. Os dois exigem o `fbclient.dll` da **mesma arquitetura do Python** (32 ou 64 bits) no PATH ou ao lado do aplicativo.
+
+**No aplicativo Python (`gui.py`)**: botão *Ler do banco (Firebird)...* na seção "Base atual da PESSOAS". Informe host, porta, caminho do `.fdb`, usuário, senha e charset, use *Testar conexão* e depois *Carregar base*.
+
+**No `index.html`**: o navegador não fala com o Firebird, então existe a ponte local `ponte.py`.
+
+```bash
+python ponte.py
+```
+
+Ela sobe um servidor em `http://127.0.0.1:8777/`, serve o próprio `index.html` e abre o navegador. O bloco *Ler direto do Firebird* aparece na seção 2 só quando a página é aberta por essa ponte — pelo arquivo direto (`file://`) ele fica escondido, porque não há como conectar. Opções: `--porta`, `--sem-navegador`, `--verboso`.
+
+O resultado é idêntico ao do CSV: o mesmo mapa `{CNPJ: registro}`, com o CNPJ reduzido a 14 dígitos e os registros sem CNPJ válido (CPF, campo vazio, tamanho diferente) descartados. Colunas do `EXPORTAR_BASE_PESSOAS.sql` que não existirem na sua tabela são simplesmente ignoradas; o *Testar conexão* lista quais faltam.
+
+Limites de segurança da leitura:
+
+- apenas `SELECT` chega ao banco — nada é gravado na `PESSOAS`;
+- nomes de tabela e de coluna passam por validação de identificador, então não dá para injetar SQL pelos campos da tela;
+- a ponte escuta somente em `127.0.0.1` e exige um token gerado a cada execução, injetado no HTML que ela mesma serve; outra aba do navegador não consegue usá-la;
+- a conexão é gravada em `conexao_firebird.json`, **sem a senha**, a menos que você marque a opção de gravá-la (aí fica em texto puro no arquivo).
+
 ## Comparação
 
 Para cada campo, a V4.1 mostra:
@@ -134,6 +165,7 @@ Mesmas regras do `index.html`, em dois programas que dispensam navegador. O moto
 
 - `gui.py` — janela com as etapas Entrada, Regras, Resultados e SQL. Empacotado como `ConsultaCNPJ.exe`.
 - `CNPJ.py` — linha de comando. Sem argumentos pergunta cada opção; com argumentos roda direto. Empacotado como `ConsultaCNPJ-CLI.exe`.
+- `ponte.py` — ponte local que liga o `index.html` ao Firebird (veja *Lendo direto do Firebird*). Empacotada como `PonteFirebird.exe`, com o `index.html` embutido.
 
 Ambos leem `CNPJ.txt` e `BASE_PESSOAS.csv` da própria pasta, e gravam `updates.sql` e `relatorio_cnpj.csv` ali mesmo. O progresso é salvo em `progresso.json` a cada consulta e pode ser retomado.
 

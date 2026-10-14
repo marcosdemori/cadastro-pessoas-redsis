@@ -14,6 +14,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 import cnpj_core as core
+import firebird_db as fb
 
 TITULO = "Saneamento de Pessoas - Redsis"
 
@@ -103,14 +104,16 @@ class App:
         base.pack(fill="x", pady=(10, 0))
         ttk.Label(
             base,
-            text="CSV exportado do Firebird/IBExpert. O cabeçalho precisa conter CNPJCPF_PESS. "
+            text="CSV exportado do Firebird/IBExpert ou leitura direta da tabela PESSOAS no Firebird. "
+                 "No CSV, o cabeçalho precisa conter CNPJCPF_PESS. "
                  "Sem a base não há comparação: todo CNPJ vira UPDATE cego e nenhum INSERT é gerado.",
             wraplength=1050,
             foreground="#555",
         ).pack(fill="x", pady=(0, 6))
         linha = ttk.Frame(base)
         linha.pack(fill="x")
-        ttk.Button(linha, text="Importar base...", command=self.importar_base).pack(side="left")
+        ttk.Button(linha, text="Importar base (CSV/TXT)...", command=self.importar_base).pack(side="left")
+        ttk.Button(linha, text="Ler do banco (Firebird)...", command=self.abrir_firebird).pack(side="left", padx=6)
         ttk.Button(linha, text="Ver SELECT de exportação", command=self.mostrar_select).pack(side="left", padx=6)
         ttk.Button(linha, text="Remover base", command=self.remover_base).pack(side="left")
         self.lbl_base = ttk.Label(linha, text="Nenhuma base carregada.", foreground="#8a6d00")
@@ -422,6 +425,145 @@ class App:
         self.lbl_base.configure(text="Nenhuma base carregada.", foreground="#8a6d00")
         self._escrever("Base removida; sem comparação com o cadastro atual.", "aviso")
         self.recalcular()
+
+    # ------------------------------------------------------------ Firebird
+
+    def abrir_firebird(self):
+        """Janela de conexao para ler a PESSOAS direto do Firebird."""
+        cfg = fb.carregar_conexao()
+        janela = tk.Toplevel(self.root)
+        janela.title("Ler base PESSOAS do Firebird")
+        janela.transient(self.root)
+        janela.resizable(False, False)
+
+        corpo = ttk.Frame(janela, padding=12)
+        corpo.pack(fill="both", expand=True)
+
+        driver = fb.driver_disponivel()
+        if driver:
+            aviso = f"Driver detectado: {driver}"
+            cor = "#0a7d25"
+        else:
+            aviso = ("Nenhum driver Firebird instalado. Rode:  pip install firebird-driver  "
+                     "(Firebird 3/4/5) ou  pip install fdb  (Firebird 2.5/3).")
+            cor = "#b00020"
+        ttk.Label(corpo, text=aviso, foreground=cor, wraplength=520).grid(
+            row=0, column=0, columnspan=3, sticky="w", pady=(0, 10))
+
+        campos = {}
+
+        def campo(rotulo, chave, valor, largura=42, senha=False, linha=0):
+            ttk.Label(corpo, text=rotulo).grid(row=linha, column=0, sticky="e", padx=(0, 6), pady=3)
+            var = tk.StringVar(value=str(valor))
+            entrada = ttk.Entry(corpo, textvariable=var, width=largura,
+                                show="*" if senha else "")
+            entrada.grid(row=linha, column=1, sticky="w", pady=3)
+            campos[chave] = var
+            return entrada
+
+        campo("Servidor (host):", "host", cfg.host, linha=1)
+        campo("Porta:", "porta", cfg.porta, largura=10, linha=2)
+        entrada_banco = campo("Banco (.fdb ou alias):", "banco", cfg.banco, linha=3)
+        ttk.Button(corpo, text="Procurar...",
+                   command=lambda: self._escolher_fdb(campos["banco"])).grid(
+            row=3, column=2, sticky="w", padx=6)
+        campo("Usuário:", "usuario", cfg.usuario, largura=20, linha=4)
+        campo("Senha:", "senha", cfg.senha, largura=20, senha=True, linha=5)
+
+        ttk.Label(corpo, text="Charset:").grid(row=6, column=0, sticky="e", padx=(0, 6), pady=3)
+        var_charset = tk.StringVar(value=cfg.charset)
+        cb = ttk.Combobox(corpo, textvariable=var_charset, values=fb.CHARSETS,
+                          state="readonly", width=18)
+        cb.grid(row=6, column=1, sticky="w", pady=3)
+
+        campo("Tabela:", "tabela", cfg.tabela, largura=20, linha=7)
+        campo("Coluna do CNPJ:", "coluna_cnpj", cfg.coluna_cnpj, largura=20, linha=8)
+        campo("Limite de linhas (0 = tudo):", "limite", cfg.limite, largura=10, linha=9)
+
+        var_salvar = tk.BooleanVar(value=cfg.salvar_senha)
+        ttk.Checkbutton(
+            corpo,
+            text="Gravar a senha em conexao_firebird.json (texto puro, sem criptografia)",
+            variable=var_salvar,
+        ).grid(row=10, column=0, columnspan=3, sticky="w", pady=(8, 0))
+
+        lbl_status = ttk.Label(corpo, text="", wraplength=520, foreground="#555")
+        lbl_status.grid(row=11, column=0, columnspan=3, sticky="w", pady=(10, 0))
+
+        def montar_cfg():
+            atual = fb.Conexao(
+                host=campos["host"].get(),
+                porta=campos["porta"].get(),
+                banco=campos["banco"].get(),
+                usuario=campos["usuario"].get(),
+                senha=campos["senha"].get(),
+                charset=var_charset.get(),
+                tabela=campos["tabela"].get(),
+                coluna_cnpj=campos["coluna_cnpj"].get(),
+                limite=campos["limite"].get(),
+                salvar_senha=var_salvar.get(),
+            )
+            return atual.normalizar()
+
+        def testar():
+            try:
+                atual = montar_cfg()
+                lbl_status.configure(text="Conectando...", foreground="#555")
+                janela.update_idletasks()
+                info = fb.testar(atual)
+            except fb.ErroFirebird as exc:
+                lbl_status.configure(text=str(exc), foreground="#b00020")
+                return
+            faltando = info["colunas_faltando"]
+            texto = (f"Conexão OK via {info['driver']}. Tabela {info['tabela']} com "
+                     f"{info['colunas_total']} coluna(s); {len(info['colunas_usadas'])} serão lidas.")
+            if faltando:
+                texto += " Ausentes (serão ignoradas): " + ", ".join(faltando)
+            lbl_status.configure(text=texto, foreground="#0a7d25")
+
+        def carregar():
+            try:
+                atual = montar_cfg()
+                lbl_status.configure(text="Lendo a tabela...", foreground="#555")
+                janela.update_idletasks()
+                base, info = fb.ler_base(atual)
+            except fb.ErroFirebird as exc:
+                lbl_status.configure(text=str(exc), foreground="#b00020")
+                self._escrever(f"Falha ao ler o Firebird: {exc}", "erro")
+                return
+            try:
+                fb.salvar_conexao(atual)
+            except OSError as exc:
+                self._escrever(f"Conexão lida, mas não deu para gravar as preferências: {exc}", "aviso")
+
+            self.base_map = base
+            self.lbl_base.configure(
+                text=f"{len(base)} registro(s) · Firebird {atual.host}:{atual.porta}",
+                foreground="#0a7d25",
+            )
+            self._escrever(
+                f"Base lida do Firebird: {info['validas']} CNPJ(s) válidos de {info['lidas']} linha(s); "
+                f"{info['ignoradas']} ignorada(s) por CNPJ ausente, CPF ou tamanho diferente de 14.",
+                "ok",
+            )
+            self.recalcular()
+            janela.destroy()
+
+        botoes = ttk.Frame(corpo)
+        botoes.grid(row=12, column=0, columnspan=3, sticky="e", pady=(12, 0))
+        ttk.Button(botoes, text="Testar conexão", command=testar).pack(side="left", padx=4)
+        ttk.Button(botoes, text="Carregar base", command=carregar).pack(side="left", padx=4)
+        ttk.Button(botoes, text="Fechar", command=janela.destroy).pack(side="left", padx=4)
+
+        entrada_banco.focus_set()
+
+    def _escolher_fdb(self, var):
+        arquivo = filedialog.askopenfilename(
+            title="Selecione o arquivo do banco",
+            filetypes=[("Banco Firebird", "*.fdb *.gdb"), ("Todos os arquivos", "*.*")],
+        )
+        if arquivo:
+            var.set(arquivo)
 
     def mostrar_select(self):
         sql = (

@@ -17,6 +17,7 @@ SUITES = [
     ("camada de rede (429, recuo, agenda, parar)", "test_rede.py"),
     ("paridade com index.html", "test_paridade.py"),
     ("interface gráfica", "test_gui.py"),
+    ("Firebird e ponte local", "test_firebird.py"),
 ]
 
 
